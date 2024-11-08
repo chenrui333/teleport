@@ -50447,10 +50447,10 @@ func (m *AccessGraphAzureSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.UmiClientId) > 0 {
-		i -= len(m.UmiClientId)
-		copy(dAtA[i:], m.UmiClientId)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.UmiClientId)))
+	if len(m.UMIClientID) > 0 {
+		i -= len(m.UMIClientID)
+		copy(dAtA[i:], m.UMIClientID)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.UMIClientID)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -61871,12 +61871,6 @@ func (m *AccessGraphSync) Size() (n int) {
 	_ = l
 	if len(m.AWS) > 0 {
 		for _, e := range m.AWS {
-			l = e.Size()
-			n += 1 + l + sovTypes(uint64(l))
-		}
-	}
-	if len(m.Azure) > 0 {
-		for _, e := range m.Azure {
 			l = e.Size()
 			n += 1 + l + sovTypes(uint64(l))
 		}
@@ -134089,39 +134083,6 @@ func (m *AccessGraphSync) Unmarshal(dAtA []byte) error {
 			}
 			m.AWS = append(m.AWS, &AccessGraphAWSSync{})
 			if err := m.AWS[len(m.AWS)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PollInterval", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := github_com_gogo_protobuf_types.StdDurationUnmarshal(&m.PollInterval, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
