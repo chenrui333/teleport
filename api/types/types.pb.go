@@ -21358,10 +21358,12 @@ var xxx_messageInfo_OktaOptions proto.InternalMessageInfo
 // AccessGraphSync is a configuration for Access Graph service.
 type AccessGraphSync struct {
 	// AWS is a configuration for AWS Access Graph service poll service.
-	AWS                  []*AccessGraphAWSSync `protobuf:"bytes,1,rep,name=AWS,proto3" json:"aws,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
+	AWS []*AccessGraphAWSSync `protobuf:"bytes,1,rep,name=AWS,proto3" json:"aws,omitempty"`
+	// Azure is a configuration for Azure Access Graph service poll service.
+	Azure                []*AccessGraphAzureSync `protobuf:"bytes,2,rep,name=Azure,proto3" json:"aws,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
+	XXX_unrecognized     []byte                  `json:"-"`
+	XXX_sizecache        int32                   `json:"-"`
 }
 
 func (m *AccessGraphSync) Reset()         { *m = AccessGraphSync{} }
@@ -50336,14 +50338,6 @@ func (m *AccessGraphSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	n415, err415 := github_com_gogo_protobuf_types.StdDurationMarshalTo(m.PollInterval, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdDuration(m.PollInterval):])
-	if err415 != nil {
-		return 0, err415
-	}
-	i -= n415
-	i = encodeVarintTypes(dAtA, i, uint64(n415))
-	i--
-	dAtA[i] = 0x12
 	if len(m.AWS) > 0 {
 		for iNdEx := len(m.AWS) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -61871,6 +61865,12 @@ func (m *AccessGraphSync) Size() (n int) {
 	_ = l
 	if len(m.AWS) > 0 {
 		for _, e := range m.AWS {
+			l = e.Size()
+			n += 1 + l + sovTypes(uint64(l))
+		}
+	}
+	if len(m.Azure) > 0 {
+		for _, e := range m.Azure {
 			l = e.Size()
 			n += 1 + l + sovTypes(uint64(l))
 		}
