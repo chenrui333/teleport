@@ -17199,11 +17199,7 @@ type PluginEntraIDSyncSettings struct {
 	// tenant_id refers to the Azure Directory that this plugin synchronizes with.
 	// This field is populated on a best-effort basis for legacy plugins but mandatory for plugins created after its introduction.
 	// For existing plugins, it is filled in using the Entra integration when utilized.
-	TenantId string `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// entra_app_id refers to the Entra Application ID that supports the SSO for "sso_connector_id".
-	// This field is populated on a best-effort basis for legacy plugins but mandatory for plugins created after its introduction.
-	// For existing plugins, it is filled in using the entity descriptor url when utilized.
-	EntraAppId           string   `protobuf:"bytes,5,opt,name=entra_app_id,json=entraAppId,proto3" json:"entra_app_id,omitempty"`
+	TenantId             string   `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -21358,10 +21354,12 @@ var xxx_messageInfo_OktaOptions proto.InternalMessageInfo
 // AccessGraphSync is a configuration for Access Graph service.
 type AccessGraphSync struct {
 	// AWS is a configuration for AWS Access Graph service poll service.
-	AWS                  []*AccessGraphAWSSync `protobuf:"bytes,1,rep,name=AWS,proto3" json:"aws,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
+	AWS []*AccessGraphAWSSync `protobuf:"bytes,1,rep,name=AWS,proto3" json:"aws,omitempty"`
+	// Azure is a configuration for the Azure Access Graph service poll service.
+	Azure                []*AccessGraphAzureSync `protobuf:"bytes,2,rep,name=Azure,proto3" json:"azure,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
+	XXX_unrecognized     []byte                  `json:"-"`
+	XXX_sizecache        int32                   `json:"-"`
 }
 
 func (m *AccessGraphSync) Reset()         { *m = AccessGraphSync{} }
@@ -21447,7 +21445,7 @@ var xxx_messageInfo_AccessGraphAWSSync proto.InternalMessageInfo
 type AccessGraphAzureSync struct {
 	Regions              []string `protobuf:"bytes,1,rep,name=Regions,proto3" json:"regions,omitempty"`
 	SubscriptionID       string   `protobuf:"bytes,2,opt,name=SubscriptionID,proto3" json:"subscription_id,omitempty"`
-	UMIClientID          string   `protobuf:"bytes,3,opt,name=UMIClientID,proto3" json:"umi_client_id,omitempty"`
+	UmiClientId          string   `protobuf:"bytes,3,opt,name=UmiClientId,proto3" json:"umi_client_id,omitempty"`
 	Integration          string   `protobuf:"bytes,4,opt,name=Integration,proto3" json:"integration,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -24821,9 +24819,6 @@ func (this *PluginEntraIDSyncSettings) Equal(that interface{}) bool {
 		return false
 	}
 	if this.TenantId != that1.TenantId {
-		return false
-	}
-	if this.EntraAppId != that1.EntraAppId {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -45814,13 +45809,6 @@ func (m *PluginEntraIDSyncSettings) MarshalToSizedBuffer(dAtA []byte) (int, erro
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.EntraAppId) > 0 {
-		i -= len(m.EntraAppId)
-		copy(dAtA[i:], m.EntraAppId)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.EntraAppId)))
-		i--
-		dAtA[i] = 0x2a
-	}
 	if len(m.TenantId) > 0 {
 		i -= len(m.TenantId)
 		copy(dAtA[i:], m.TenantId)
@@ -50336,14 +50324,6 @@ func (m *AccessGraphSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	n431, err431 := github_com_gogo_protobuf_types.StdDurationMarshalTo(m.PollInterval, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdDuration(m.PollInterval):])
-	if err431 != nil {
-		return 0, err431
-	}
-	i -= n431
-	i = encodeVarintTypes(dAtA, i, uint64(n431))
-	i--
-	dAtA[i] = 0x12
 	if len(m.AWS) > 0 {
 		for iNdEx := len(m.AWS) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -50447,10 +50427,10 @@ func (m *AccessGraphAzureSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.UMIClientID) > 0 {
-		i -= len(m.UMIClientID)
-		copy(dAtA[i:], m.UMIClientID)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.UMIClientID)))
+	if len(m.UmiClientId) > 0 {
+		i -= len(m.UmiClientId)
+		copy(dAtA[i:], m.UmiClientId)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.UmiClientId)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -59738,10 +59718,6 @@ func (m *PluginEntraIDSyncSettings) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(m.EntraAppId)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -61818,8 +61794,12 @@ func (m *AccessGraphSync) Size() (n int) {
 			n += 1 + l + sovTypes(uint64(l))
 		}
 	}
-	l = github_com_gogo_protobuf_types.SizeOfStdDuration(m.PollInterval)
-	n += 1 + l + sovTypes(uint64(l))
+	if len(m.Azure) > 0 {
+		for _, e := range m.Azure {
+			l = e.Size()
+			n += 1 + l + sovTypes(uint64(l))
+		}
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -61868,7 +61848,7 @@ func (m *AccessGraphAzureSync) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(m.UMIClientID)
+	l = len(m.UmiClientId)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
@@ -122077,38 +122057,6 @@ func (m *PluginEntraIDSyncSettings) Unmarshal(dAtA []byte) error {
 			}
 			m.TenantId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EntraAppId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.EntraAppId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTypes(dAtA[iNdEx:])
@@ -134331,7 +134279,7 @@ func (m *AccessGraphAzureSync) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UMIClientID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UmiClientId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -134359,7 +134307,7 @@ func (m *AccessGraphAzureSync) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.UMIClientID = string(dAtA[iNdEx:postIndex])
+			m.UmiClientId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
