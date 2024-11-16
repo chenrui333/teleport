@@ -21360,7 +21360,7 @@ type AccessGraphSync struct {
 	// AWS is a configuration for AWS Access Graph service poll service.
 	AWS []*AccessGraphAWSSync `protobuf:"bytes,1,rep,name=AWS,proto3" json:"aws,omitempty"`
 	// Azure is a configuration for Azure Access Graph service poll service.
-	Azure                []*AccessGraphAzureSync `protobuf:"bytes,2,rep,name=Azure,proto3" json:"aws,omitempty"`
+	Azure                []*AccessGraphAzureSync `protobuf:"bytes,2,rep,name=Azure,proto3" json:"azure,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
 	XXX_unrecognized     []byte                  `json:"-"`
 	XXX_sizecache        int32                   `json:"-"`
@@ -21448,8 +21448,8 @@ var xxx_messageInfo_AccessGraphAWSSync proto.InternalMessageInfo
 // AccessGraphAzureSync is a configuration for Azure Access Graph service poll service.
 type AccessGraphAzureSync struct {
 	Regions              []string `protobuf:"bytes,1,rep,name=Regions,proto3" json:"regions,omitempty"`
-	SubscriptionID       string   `protobuf:"bytes,2,opt,name=SubscriptionID,proto3" json:"subscription_id,omitempty"`
-	UMIClientID          string   `protobuf:"bytes,3,opt,name=UMIClientID,proto3" json:"umi_client_id,omitempty"`
+	SubscriptionID       string   `protobuf:"bytes,2,opt,name=SubscriptionID,proto3" json:"regions,omitempty"`
+	UmiClientId          string   `protobuf:"bytes,3,opt,name=UmiClientId,proto3" json:"regions,omitempty"`
 	Integration          string   `protobuf:"bytes,4,opt,name=Integration,proto3" json:"integration,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -50498,10 +50498,10 @@ func (m *AccessGraphAzureSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.UMIClientID) > 0 {
-		i -= len(m.UMIClientID)
-		copy(dAtA[i:], m.UMIClientID)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.UMIClientID)))
+	if len(m.UmiClientId) > 0 {
+		i -= len(m.UmiClientId)
+		copy(dAtA[i:], m.UmiClientId)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.UmiClientId)))
 		i--
 		dAtA[i] = 0x1a
 	}
