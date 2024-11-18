@@ -21360,7 +21360,7 @@ type AccessGraphSync struct {
 	// AWS is a configuration for AWS Access Graph service poll service.
 	AWS []*AccessGraphAWSSync `protobuf:"bytes,1,rep,name=AWS,proto3" json:"aws,omitempty"`
 	// Azure is a configuration for Azure Access Graph service poll service.
-	Azure                []*AccessGraphAzureSync `protobuf:"bytes,2,rep,name=Azure,proto3" json:"azure,omitempty"`
+	Azure                []*AccessGraphAzureSync `protobuf:"bytes,2,rep,name=Azure,proto3" json:"aws,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
 	XXX_unrecognized     []byte                  `json:"-"`
 	XXX_sizecache        int32                   `json:"-"`
@@ -21448,8 +21448,8 @@ var xxx_messageInfo_AccessGraphAWSSync proto.InternalMessageInfo
 // AccessGraphAzureSync is a configuration for Azure Access Graph service poll service.
 type AccessGraphAzureSync struct {
 	Regions              []string `protobuf:"bytes,1,rep,name=Regions,proto3" json:"regions,omitempty"`
-	SubscriptionID       string   `protobuf:"bytes,2,opt,name=SubscriptionID,proto3" json:"regions,omitempty"`
-	UmiClientId          string   `protobuf:"bytes,3,opt,name=UmiClientId,proto3" json:"regions,omitempty"`
+	SubscriptionID       string   `protobuf:"bytes,2,opt,name=SubscriptionID,proto3" json:"subscription_id,omitempty"`
+	UMIClientID          string   `protobuf:"bytes,3,opt,name=UMIClientID,proto3" json:"umi_client_id,omitempty"`
 	Integration          string   `protobuf:"bytes,4,opt,name=Integration,proto3" json:"integration,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -50467,63 +50467,6 @@ func (m *AccessGraphAzureSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *AccessGraphAzureSync) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AccessGraphAzureSync) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AccessGraphAzureSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Integration) > 0 {
-		i -= len(m.Integration)
-		copy(dAtA[i:], m.Integration)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Integration)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.UmiClientId) > 0 {
-		i -= len(m.UmiClientId)
-		copy(dAtA[i:], m.UmiClientId)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.UmiClientId)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.SubscriptionID) > 0 {
-		i -= len(m.SubscriptionID)
-		copy(dAtA[i:], m.SubscriptionID)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.SubscriptionID)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Regions) > 0 {
-		for iNdEx := len(m.Regions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Regions[iNdEx])
-			copy(dAtA[i:], m.Regions[iNdEx])
-			i = encodeVarintTypes(dAtA, i, uint64(len(m.Regions[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTypes(v)
 	base := offset
@@ -61875,8 +61818,6 @@ func (m *AccessGraphSync) Size() (n int) {
 			n += 1 + l + sovTypes(uint64(l))
 		}
 	}
-	l = github_com_gogo_protobuf_types.SizeOfStdDuration(m.PollInterval)
-	n += 1 + l + sovTypes(uint64(l))
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
