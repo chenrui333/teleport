@@ -21359,8 +21359,10 @@ var xxx_messageInfo_OktaOptions proto.InternalMessageInfo
 type AccessGraphSync struct {
 	// AWS is a configuration for AWS Access Graph service poll service.
 	AWS []*AccessGraphAWSSync `protobuf:"bytes,1,rep,name=AWS,proto3" json:"aws,omitempty"`
+	// PollInterval is the frequency at which to poll for AWS resources
+	PollInterval time.Duration `protobuf:"bytes,2,opt,name=PollInterval,proto3,stdduration" json:"poll_interval,omitempty"`
 	// Azure is a configuration for Azure Access Graph service poll service.
-	Azure                []*AccessGraphAzureSync `protobuf:"bytes,2,rep,name=Azure,proto3" json:"aws,omitempty"`
+	Azure                []*AccessGraphAzureSync `protobuf:"bytes,3,rep,name=Azure,proto3" json:"aws,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
 	XXX_unrecognized     []byte                  `json:"-"`
 	XXX_sizecache        int32                   `json:"-"`
@@ -50338,6 +50340,20 @@ func (m *AccessGraphSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
+	if len(m.Azure) > 0 {
+		for iNdEx := len(m.Azure) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Azure[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTypes(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
 	if len(m.AWS) > 0 {
 		for iNdEx := len(m.AWS) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -61812,6 +61828,8 @@ func (m *AccessGraphSync) Size() (n int) {
 			n += 1 + l + sovTypes(uint64(l))
 		}
 	}
+	l = github_com_gogo_protobuf_types.SizeOfStdDuration(m.PollInterval)
+	n += 1 + l + sovTypes(uint64(l))
 	if len(m.Azure) > 0 {
 		for _, e := range m.Azure {
 			l = e.Size()
@@ -134028,6 +134046,39 @@ func (m *AccessGraphSync) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PollInterval", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_gogo_protobuf_types.StdDurationUnmarshal(&m.PollInterval, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Azure", wireType)
 			}
