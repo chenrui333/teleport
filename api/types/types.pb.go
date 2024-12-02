@@ -21362,7 +21362,7 @@ type AccessGraphSync struct {
 	// PollInterval is the frequency at which to poll for AWS resources
 	PollInterval time.Duration `protobuf:"bytes,2,opt,name=PollInterval,proto3,stdduration" json:"poll_interval,omitempty"`
 	// Azure is a configuration for Azure Access Graph service poll service.
-	Azure                []*AccessGraphAzureSync `protobuf:"bytes,3,rep,name=Azure,proto3" json:"aws,omitempty"`
+	Azure                []*AccessGraphAzureSync `protobuf:"bytes,3,rep,name=Azure,proto3" json:"azure,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
 	XXX_unrecognized     []byte                  `json:"-"`
 	XXX_sizecache        int32                   `json:"-"`
