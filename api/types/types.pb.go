@@ -21462,7 +21462,7 @@ func (m *AccessGraphAzureSync) Reset()         { *m = AccessGraphAzureSync{} }
 func (m *AccessGraphAzureSync) String() string { return proto.CompactTextString(m) }
 func (*AccessGraphAzureSync) ProtoMessage()    {}
 func (*AccessGraphAzureSync) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9198ee693835762e, []int{359}
+	return fileDescriptor_9198ee693835762e, []int{371}
 }
 func (m *AccessGraphAzureSync) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -50351,9 +50351,17 @@ func (m *AccessGraphSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintTypes(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0x1a
 		}
 	}
+	n431, err431 := github_com_gogo_protobuf_types.StdDurationMarshalTo(m.PollInterval, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdDuration(m.PollInterval):])
+	if err431 != nil {
+		return 0, err431
+	}
+	i -= n431
+	i = encodeVarintTypes(dAtA, i, uint64(n431))
+	i--
+	dAtA[i] = 0x12
 	if len(m.AWS) > 0 {
 		for iNdEx := len(m.AWS) - 1; iNdEx >= 0; iNdEx-- {
 			{
