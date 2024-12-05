@@ -21451,8 +21451,7 @@ var xxx_messageInfo_AccessGraphAWSSync proto.InternalMessageInfo
 type AccessGraphAzureSync struct {
 	Regions              []string `protobuf:"bytes,1,rep,name=Regions,proto3" json:"regions,omitempty"`
 	SubscriptionID       string   `protobuf:"bytes,2,opt,name=SubscriptionID,proto3" json:"subscription_id,omitempty"`
-	UMIClientID          string   `protobuf:"bytes,3,opt,name=UMIClientID,proto3" json:"umi_client_id,omitempty"`
-	Integration          string   `protobuf:"bytes,4,opt,name=Integration,proto3" json:"integration,omitempty"`
+	Integration          string   `protobuf:"bytes,3,opt,name=Integration,proto3" json:"integration,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -50463,13 +50462,6 @@ func (m *AccessGraphAzureSync) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Integration)
 		i = encodeVarintTypes(dAtA, i, uint64(len(m.Integration)))
 		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.UMIClientID) > 0 {
-		i -= len(m.UMIClientID)
-		copy(dAtA[i:], m.UMIClientID)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.UMIClientID)))
-		i--
 		dAtA[i] = 0x1a
 	}
 	if len(m.SubscriptionID) > 0 {
@@ -61889,10 +61881,6 @@ func (m *AccessGraphAzureSync) Size() (n int) {
 		}
 	}
 	l = len(m.SubscriptionID)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	l = len(m.UMIClientID)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
@@ -134387,38 +134375,6 @@ func (m *AccessGraphAzureSync) Unmarshal(dAtA []byte) error {
 			m.SubscriptionID = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UMIClientID", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.UMIClientID = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Integration", wireType)
 			}
