@@ -215,7 +215,7 @@ func generateSchema(file *File, groupName string, format crdFormatFunc, resp *go
 			},
 		},
 		{
-			name: "Database",
+			name: "DatabaseV3",
 			opts: []resourceSchemaOption{
 				withNameOverride("Database"),
 				withVersionOverride(types.V3),
