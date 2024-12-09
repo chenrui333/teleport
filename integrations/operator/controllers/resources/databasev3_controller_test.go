@@ -33,13 +33,10 @@ import (
 	"github.com/gravitational/teleport/integrations/operator/controllers/resources/testlib"
 )
 
+// Spec matches https://goteleport.com/docs/enroll-resources/database-access/guides/dynamic-registration/
 var databaseV3Spec = types.DatabaseSpecV3{
 	Protocol: "postgres",
-	URI:      "postgres://user@1.2.3.4:5234",
-	TLS: types.DatabaseTLS{
-		Mode:       0,
-		ServerName: "server-name",
-	},
+	URI:      "1.2.3.4:5234",
 }
 
 type databaseV3TestingPrimitives struct {
