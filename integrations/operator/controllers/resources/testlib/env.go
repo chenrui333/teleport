@@ -21,6 +21,7 @@ package testlib
 import (
 	"context"
 	"math/rand/v2"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -57,11 +58,9 @@ import (
 	"github.com/gravitational/teleport/integrations/operator/controllers"
 	"github.com/gravitational/teleport/integrations/operator/controllers/resources"
 	"github.com/gravitational/teleport/lib/modules"
-	"github.com/gravitational/teleport/lib/service"
 	"github.com/gravitational/teleport/lib/service/servicecfg"
 	"github.com/gravitational/teleport/lib/srv/db/common"
 	"github.com/gravitational/teleport/lib/srv/db/postgres"
-	"github.com/gravitational/teleport/tool/teleport/testenv"
 )
 
 // scheme is our own test-specific scheme to avoid using the global
@@ -236,17 +235,16 @@ func (s *TestSetup) StopKubernetesOperator() {
 }
 
 // Spec matches https://goteleport.com/docs/enroll-resources/database-access/guides/dynamic-registration/
-func setupMockPostgresServer(t *testing.T, process *service.TeleportProcess, setup *TestSetup) {
-	rootClient := testenv.MakeDefaultAuthClient(t, process)
-
+func setupMockPostgresServer(t *testing.T, setup *TestSetup) {
 	postgresTestServer, err := postgres.NewTestServer(common.TestServerConfig{
-		AuthClient: rootClient,
+		AuthClient:   setup.TeleportClient,
+		AllowAnyUser: true,
 	})
 	require.NoError(t, err)
 
 	go func() {
-		t.Logf("Postgres Fake server running at %s port", postgresTestServer.Port())
 		require.NoError(t, postgresTestServer.Serve())
+		t.Logf("Postgres Fake server running at %s port", postgresTestServer.Port())
 	}()
 	t.Cleanup(func() {
 		postgresTestServer.Close()
@@ -254,7 +252,7 @@ func setupMockPostgresServer(t *testing.T, process *service.TeleportProcess, set
 
 	setup.DatabaseConfig = types.DatabaseSpecV3{
 		Protocol: "postgres",
-		URI:      "localhost:" + postgresTestServer.Port(),
+		URI:      net.JoinHostPort("localhost", postgresTestServer.Port()),
 	}
 }
 
@@ -287,10 +285,6 @@ func setupTeleportClient(t *testing.T, setup *TestSetup) {
 		err := setup.TeleportClient.Close()
 		require.NoError(t, err)
 	})
-
-	// This will not work when OPERATOR_TEST_TELEPORT_ADDR is set.
-	// Not sure how to work around this.
-	setupMockPostgresServer(t, teleportServer.Process, setup)
 }
 
 type TestOption func(*TestSetup)
@@ -343,6 +337,7 @@ func SetupTestEnv(t *testing.T, opts ...TestOption) *TestSetup {
 	}
 
 	setupTeleportClient(t, setup)
+	setupMockPostgresServer(t, setup)
 
 	// If the test wants to do step by step reconciliation, we don't start
 	// an operator in the background.
