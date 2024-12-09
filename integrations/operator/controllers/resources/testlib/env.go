@@ -122,12 +122,13 @@ func defaultTeleportServiceConfig(t *testing.T) (*helpers.TeleInstance, string) 
 	rcConf.Proxy.DisableWebInterface = true
 	rcConf.SSH.Enabled = true
 	rcConf.Version = "v2"
+	rcConf.Databases.Enabled = true
 
 	roleName := ValidRandomResourceName("role-")
 	unrestricted := []string{"list", "create", "read", "update", "delete"}
 	role, err := types.NewRole(roleName, types.RoleSpecV6{
 		Allow: types.RoleConditions{
-			// the operator has wildcard noe labs to be able to see them
+			// the operator has wildcard node labs to be able to see them
 			// but has no login allowed, so it cannot SSH into them
 			NodeLabels: types.Labels{"*": []string{"*"}},
 			Rules: []types.Rule{
