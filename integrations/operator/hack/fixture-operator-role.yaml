@@ -74,7 +74,7 @@ spec:
           - update
           - delete
       - resources:
-          - database
+          - db
         verbs:
           - list
           - create
