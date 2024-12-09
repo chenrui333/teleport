@@ -27,7 +27,7 @@ import (
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/teleport/api/types"
-	resourcesv3 "github.com/gravitational/teleport/integrations/operator/apis/resources/v3"
+	resourcesv1 "github.com/gravitational/teleport/integrations/operator/apis/resources/v1"
 	"github.com/gravitational/teleport/integrations/operator/controllers"
 	"github.com/gravitational/teleport/integrations/operator/controllers/reconcilers"
 )
@@ -71,7 +71,7 @@ func NewDatabaseV3Reconciler(client kclient.Client, tClient *client.Client) (con
 		teleportClient: tClient,
 	}
 
-	resourceReconciler, err := reconcilers.NewTeleportResourceWithLabelsReconciler[types.Database, *resourcesv3.TeleportDatabaseV3](
+	resourceReconciler, err := reconcilers.NewTeleportResourceWithLabelsReconciler[types.Database, *resourcesv1.TeleportDatabaseV3](
 		client,
 		databaseClient,
 	)

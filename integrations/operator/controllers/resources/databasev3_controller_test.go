@@ -28,7 +28,7 @@ import (
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gravitational/teleport/api/types"
-	resourcesv3 "github.com/gravitational/teleport/integrations/operator/apis/resources/v3"
+	resourcesv1 "github.com/gravitational/teleport/integrations/operator/apis/resources/v1"
 	"github.com/gravitational/teleport/integrations/operator/controllers/reconcilers"
 	"github.com/gravitational/teleport/integrations/operator/controllers/resources/testlib"
 )
@@ -74,18 +74,18 @@ func (g *databaseV3TestingPrimitives) DeleteTeleportResource(ctx context.Context
 }
 
 func (g *databaseV3TestingPrimitives) CreateKubernetesResource(ctx context.Context, name string) error {
-	database := &resourcesv3.TeleportDatabaseV3{
+	database := &resourcesv1.TeleportDatabaseV3{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: g.setup.Namespace.Name,
 		},
-		Spec: resourcesv3.TeleportDatabaseSpec(databaseV3Spec),
+		Spec: resourcesv1.TeleportDatabaseSpec(databaseV3Spec),
 	}
 	return trace.Wrap(g.setup.K8sClient.Create(ctx, database))
 }
 
 func (g *databaseV3TestingPrimitives) DeleteKubernetesResource(ctx context.Context, name string) error {
-	database := &resourcesv3.TeleportDatabaseV3{
+	database := &resourcesv1.TeleportDatabaseV3{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: g.setup.Namespace.Name,
@@ -94,8 +94,8 @@ func (g *databaseV3TestingPrimitives) DeleteKubernetesResource(ctx context.Conte
 	return trace.Wrap(g.setup.K8sClient.Delete(ctx, database))
 }
 
-func (g *databaseV3TestingPrimitives) GetKubernetesResource(ctx context.Context, name string) (*resourcesv3.TeleportDatabaseV3, error) {
-	database := &resourcesv3.TeleportDatabaseV3{}
+func (g *databaseV3TestingPrimitives) GetKubernetesResource(ctx context.Context, name string) (*resourcesv1.TeleportDatabaseV3, error) {
+	database := &resourcesv1.TeleportDatabaseV3{}
 	obj := kclient.ObjectKey{
 		Name:      name,
 		Namespace: g.setup.Namespace.Name,
@@ -112,22 +112,22 @@ func (g *databaseV3TestingPrimitives) ModifyKubernetesResource(ctx context.Conte
 	return g.setup.K8sClient.Update(ctx, database)
 }
 
-func (g *databaseV3TestingPrimitives) CompareTeleportAndKubernetesResource(tResource types.Database, kubeResource *resourcesv3.TeleportDatabaseV3) (bool, string) {
+func (g *databaseV3TestingPrimitives) CompareTeleportAndKubernetesResource(tResource types.Database, kubeResource *resourcesv1.TeleportDatabaseV3) (bool, string) {
 	diff := cmp.Diff(tResource, kubeResource.ToTeleport())
 	return diff == "", diff
 }
 
 func TestTeleportdatabaseV3Creation(t *testing.T) {
 	test := &databaseV3TestingPrimitives{}
-	testlib.ResourceCreationTest[types.Database, *resourcesv3.TeleportDatabaseV3](t, test)
+	testlib.ResourceCreationTest[types.Database, *resourcesv1.TeleportDatabaseV3](t, test)
 }
 
 func TestTeleportdatabaseV3DeletionDrift(t *testing.T) {
 	test := &databaseV3TestingPrimitives{}
-	testlib.ResourceDeletionDriftTest[types.Database, *resourcesv3.TeleportDatabaseV3](t, test)
+	testlib.ResourceDeletionDriftTest[types.Database, *resourcesv1.TeleportDatabaseV3](t, test)
 }
 
 func TestTeleportdatabaseV3Update(t *testing.T) {
 	test := &databaseV3TestingPrimitives{}
-	testlib.ResourceUpdateTest[types.Database, *resourcesv3.TeleportDatabaseV3](t, test)
+	testlib.ResourceUpdateTest[types.Database, *resourcesv1.TeleportDatabaseV3](t, test)
 }
