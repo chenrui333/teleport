@@ -81,5 +81,10 @@ spec:
           - read
           - update
           - delete
+    impersonate:
+      users:
+        - Db
+      roles:
+        - Db
   deny: {}
 version: v7

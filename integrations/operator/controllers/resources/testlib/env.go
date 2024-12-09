@@ -144,6 +144,10 @@ func defaultTeleportServiceConfig(t *testing.T) (*helpers.TeleInstance, string) 
 				types.NewRule(types.KindNode, unrestricted),
 				types.NewRule(types.KindDatabase, unrestricted),
 			},
+			Impersonate: &types.ImpersonateConditions{
+				Users: []string{"Db"},
+				Roles: []string{"Db"},
+			},
 		},
 	})
 	require.NoError(t, err)
