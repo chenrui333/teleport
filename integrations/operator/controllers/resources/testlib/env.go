@@ -57,7 +57,11 @@ import (
 	"github.com/gravitational/teleport/integrations/operator/controllers"
 	"github.com/gravitational/teleport/integrations/operator/controllers/resources"
 	"github.com/gravitational/teleport/lib/modules"
+	"github.com/gravitational/teleport/lib/service"
 	"github.com/gravitational/teleport/lib/service/servicecfg"
+	"github.com/gravitational/teleport/lib/srv/db/common"
+	"github.com/gravitational/teleport/lib/srv/db/postgres"
+	"github.com/gravitational/teleport/tool/teleport/testenv"
 )
 
 // scheme is our own test-specific scheme to avoid using the global
@@ -122,7 +126,6 @@ func defaultTeleportServiceConfig(t *testing.T) (*helpers.TeleInstance, string) 
 	rcConf.Proxy.DisableWebInterface = true
 	rcConf.SSH.Enabled = true
 	rcConf.Version = "v2"
-	rcConf.Databases.Enabled = true
 
 	roleName := ValidRandomResourceName("role-")
 	unrestricted := []string{"list", "create", "read", "update", "delete"}
@@ -186,6 +189,7 @@ type TestSetup struct {
 	Operator                 manager.Manager
 	OperatorCancel           context.CancelFunc
 	OperatorName             string
+	DatabaseConfig           types.DatabaseSpecV3
 	stepByStepReconciliation bool
 }
 
@@ -231,6 +235,29 @@ func (s *TestSetup) StopKubernetesOperator() {
 	s.OperatorCancel()
 }
 
+// Spec matches https://goteleport.com/docs/enroll-resources/database-access/guides/dynamic-registration/
+func setupMockPostgresServer(t *testing.T, process *service.TeleportProcess, setup *TestSetup) {
+	rootClient := testenv.MakeDefaultAuthClient(t, process)
+
+	postgresTestServer, err := postgres.NewTestServer(common.TestServerConfig{
+		AuthClient: rootClient,
+	})
+	require.NoError(t, err)
+
+	go func() {
+		t.Logf("Postgres Fake server running at %s port", postgresTestServer.Port())
+		require.NoError(t, postgresTestServer.Serve())
+	}()
+	t.Cleanup(func() {
+		postgresTestServer.Close()
+	})
+
+	setup.DatabaseConfig = types.DatabaseSpecV3{
+		Protocol: "postgres",
+		URI:      "localhost:" + postgresTestServer.Port(),
+	}
+}
+
 func setupTeleportClient(t *testing.T, setup *TestSetup) {
 	// Override teleport client with client to locally connected teleport
 	// cluster (with default tsh credentials).
@@ -260,6 +287,10 @@ func setupTeleportClient(t *testing.T, setup *TestSetup) {
 		err := setup.TeleportClient.Close()
 		require.NoError(t, err)
 	})
+
+	// This will not work when OPERATOR_TEST_TELEPORT_ADDR is set.
+	// Not sure how to work around this.
+	setupMockPostgresServer(t, teleportServer.Process, setup)
 }
 
 type TestOption func(*TestSetup)

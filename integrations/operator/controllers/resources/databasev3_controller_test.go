@@ -20,7 +20,6 @@ package resources_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -28,19 +27,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/types"
 	resourcesv1 "github.com/gravitational/teleport/integrations/operator/apis/resources/v1"
 	"github.com/gravitational/teleport/integrations/operator/controllers/reconcilers"
 	"github.com/gravitational/teleport/integrations/operator/controllers/resources/testlib"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
-
-// Spec matches https://goteleport.com/docs/enroll-resources/database-access/guides/dynamic-registration/
-var databaseV3Spec = types.DatabaseSpecV3{
-	Protocol: "postgres",
-	URI:      "1.2.3.4:5234",
-}
 
 type databaseV3TestingPrimitives struct {
 	setup *testSetup
@@ -55,38 +46,8 @@ func (g *databaseV3TestingPrimitives) SetupTeleportFixtures(ctx context.Context)
 	return nil
 }
 
-func debug(ctx context.Context, teleportClient *client.Client) error {
-	log := ctrllog.FromContext(ctx)
-	log.Info("STARTING DEBUG DUMP")
-
-	roles, err := teleportClient.GetCurrentUserRoles(ctx)
-	if err != nil {
-		return trace.Wrap(err, "failed to get roles")
-	}
-
-	log.Info("ROLES:")
-	for _, role := range roles {
-		log.Info(fmt.Sprintf("ROLE NAME: %q", role.GetName()))
-		log.Info("ALLOW RULES:")
-		for i, rule := range role.GetRules(types.Allow) {
-			log.Info(fmt.Sprintf("RULE %d", i), "resources", rule.Resources, "actions", rule.Actions, "verbs", rule.Verbs, "where", rule.Where)
-		}
-		log.Info("DENY RULES:")
-		for i, rule := range role.GetRules(types.Deny) {
-			log.Info(fmt.Sprintf("RULE %d", i), "resources", rule.Resources, "actions", rule.Actions, "verbs", rule.Verbs, "where", rule.Where)
-		}
-	}
-
-	return nil
-}
-
 func (g *databaseV3TestingPrimitives) CreateTeleportResource(ctx context.Context, name string) error {
-	err := debug(ctx, g.setup.TeleportClient)
-	if err != nil {
-		return trace.Wrap(err, "debugging failed")
-	}
-
-	database, err := types.NewDatabaseV3(types.Metadata{Name: name}, databaseV3Spec)
+	database, err := types.NewDatabaseV3(types.Metadata{Name: name}, g.setup.DatabaseConfig)
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -109,7 +70,7 @@ func (g *databaseV3TestingPrimitives) CreateKubernetesResource(ctx context.Conte
 			Name:      name,
 			Namespace: g.setup.Namespace.Name,
 		},
-		Spec: resourcesv1.TeleportDatabaseSpec(databaseV3Spec),
+		Spec: resourcesv1.TeleportDatabaseSpec(g.setup.DatabaseConfig),
 	}
 	return trace.Wrap(g.setup.K8sClient.Create(ctx, database))
 }
@@ -147,17 +108,17 @@ func (g *databaseV3TestingPrimitives) CompareTeleportAndKubernetesResource(tReso
 	return diff == "", diff
 }
 
-func TestTeleportdatabaseV3Creation(t *testing.T) {
+func TestTeleportDatabaseV3Creation(t *testing.T) {
 	test := &databaseV3TestingPrimitives{}
 	testlib.ResourceCreationTest[types.Database, *resourcesv1.TeleportDatabaseV3](t, test)
 }
 
-func TestTeleportdatabaseV3DeletionDrift(t *testing.T) {
+func TestTeleportDatabaseV3DeletionDrift(t *testing.T) {
 	test := &databaseV3TestingPrimitives{}
 	testlib.ResourceDeletionDriftTest[types.Database, *resourcesv1.TeleportDatabaseV3](t, test)
 }
 
-func TestTeleportdatabaseV3Update(t *testing.T) {
+func TestTeleportDatabaseV3Update(t *testing.T) {
 	test := &databaseV3TestingPrimitives{}
 	testlib.ResourceUpdateTest[types.Database, *resourcesv1.TeleportDatabaseV3](t, test)
 }
