@@ -131,6 +131,14 @@ data:
               - read
               - update
               - delete
+          - resources:
+              - database
+            verbs:
+              - list
+              - create
+              - read
+              - update
+              - delete
       deny: {}
     version: v7
     ---
