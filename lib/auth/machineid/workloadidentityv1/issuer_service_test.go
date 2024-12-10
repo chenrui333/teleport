@@ -54,7 +54,7 @@ func Test_getFieldStringValue(t *testing.T) {
 			},
 			attr: "user",
 			requireErr: func(t require.TestingT, err error, i ...interface{}) {
-				require.ErrorContains(t, err, "field \"user\" is not a string")
+				require.ErrorContains(t, err, "attribute \"user\" is not a string")
 			},
 		},
 		{
@@ -131,6 +131,18 @@ func Test_templateString(t *testing.T) {
 				},
 			},
 			requireErr: require.NoError,
+		},
+		{
+			name: "fail due to unset",
+			in:   "hello {{workload.kubernetes.pod_name}}",
+			attrs: &workloadidentityv1pb.Attrs{
+				User: &workloadidentityv1pb.UserAttrs{
+					Username: "jeff",
+				},
+			},
+			requireErr: func(t require.TestingT, err error, i ...interface{}) {
+				require.ErrorContains(t, err, "attribute \"workload.kubernetes.pod_name\" unset")
+			},
 		},
 	}
 	for _, tt := range tests {

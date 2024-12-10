@@ -111,23 +111,25 @@ func getFieldStringValue(attrs *workloadidentityv1pb.Attrs, attr string) (string
 	// join.gitlab.username
 	attrParts := strings.Split(attr, ".")
 	message := attrs.ProtoReflect()
+	// TODO: Improve errors by including the fully qualified attribute (e.g
+	// add up the parts of the attribute path processed thus far)
 	for i, part := range attrParts {
 		fieldDesc := message.Descriptor().Fields().ByTextName(part)
 		if fieldDesc == nil {
-			return "", trace.NotFound("field %q not found", part)
+			return "", trace.NotFound("attribute %q not found", part)
 		}
 		// We expect the final key to point to a string field - otherwise - we
 		// return an error.
 		if i == len(attrParts)-1 {
 			if fieldDesc.Kind() != protoreflect.StringKind {
-				return "", trace.BadParameter("field %q is not a string", part)
+				return "", trace.BadParameter("attribute %q is not a string", part)
 			}
 			return message.Get(fieldDesc).String(), nil
 		}
 		// If we're not processing the final key part, we expect this to point
 		// to a message that we can further explore.
 		if fieldDesc.Kind() != protoreflect.MessageKind {
-			return "", trace.BadParameter("field %q is not a message", part)
+			return "", trace.BadParameter("attribute %q is not a message", part)
 		}
 		message = message.Get(fieldDesc).Message()
 	}
@@ -150,6 +152,12 @@ func templateString(in string, attrs *workloadidentityv1pb.Attrs) (string, error
 		value, err := getFieldStringValue(attrs, attrKey)
 		if err != nil {
 			return "", trace.Wrap(err, "fetching attribute value for %q", attrKey)
+		}
+		// We want to have an implicit rule here that if an attribute is
+		// included in the template, but is not set, we should refuse to issue
+		// the credential.
+		if value == "" {
+			return "", trace.NotFound("attribute %q unset", attrKey)
 		}
 		in = strings.Replace(in, match[0], value, 1)
 	}
@@ -180,6 +188,21 @@ ruleLoop:
 	return trace.AccessDenied("no matching rule found")
 }
 
+func (s *IssuanceService) deriveAttrs(
+	authzCtx *authz.Context,
+	workloadAttrs *workloadidentityv1pb.WorkloadAttrs,
+) (*workloadidentityv1pb.Attrs, error) {
+	attrs := &workloadidentityv1pb.Attrs{
+		Workload: workloadAttrs,
+		User: &workloadidentityv1pb.UserAttrs{
+			Username: authzCtx.User.GetName(),
+		},
+		Join: &workloadidentityv1pb.JoinAttrs{},
+	}
+
+	return attrs, nil
+}
+
 func (s *IssuanceService) IssueWorkloadIdentity(
 	ctx context.Context,
 	req *workloadidentityv1pb.IssueWorkloadIdentityRequest,
@@ -189,8 +212,11 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 		return nil, trace.Wrap(err)
 	}
 
-	if req.GetName() == "" {
+	switch {
+	case req.GetName() == "":
 		return nil, trace.BadParameter("name: is required")
+	case req.GetCredential() == nil:
+		return nil, trace.BadParameter("at least one credential type must be requested")
 	}
 
 	// TODO: Enforce WorkloadIdentity labelling access control?
@@ -199,15 +225,10 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 		return nil, trace.Wrap(err)
 	}
 
-	// TODO: Build up workload identity evaluation context.
-	attrs := &workloadidentityv1pb.Attrs{
-		Workload: req.WorkloadAttrs,
-		User: &workloadidentityv1pb.UserAttrs{
-			Username: authCtx.User.GetName(),
-		},
-		Join: &workloadidentityv1pb.JoinAttrs{},
+	attrs, err := s.deriveAttrs(authCtx, req.GetWorkloadAttrs())
+	if err != nil {
+		return nil, trace.Wrap(err, "deriving attributes")
 	}
-
 	// Evaluate any rules explicitly configured by the user
 	if err := evaluateRules(wi, attrs); err != nil {
 		return nil, trace.Wrap(err)
@@ -215,16 +236,19 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 
 	// Perform any templating
 
-	_, err = spiffeid.FromURI(&url.URL{
+	spiffeIDPath, err := templateString(wi.GetSpec().GetSpiffe().GetId(), attrs)
+	if err != nil {
+		return nil, trace.Wrap(err, "templating spec.spiffe.id")
+	}
+	spiffeID, err := spiffeid.FromURI(&url.URL{
 		Scheme: "spiffe",
 		Host:   s.clusterName,
-		Path:   "woof",
+		Path:   spiffeIDPath,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err, "creating SPIFFE ID")
 	}
-
-	// TODO: Perform templating
+	s.logger.WarnContext(ctx, "spiffeID", "id", spiffeID.String())
 
 	// TODO: Issue X509 or JWT
 
