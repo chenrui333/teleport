@@ -20,10 +20,14 @@ import (
 	"context"
 	"crypto"
 	"log/slog"
+	"net/url"
+	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
+	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/gravitational/teleport"
@@ -48,6 +52,8 @@ type IssuanceServiceConfig struct {
 	Emitter    apievents.Emitter
 	Logger     *slog.Logger
 	KeyStore   KeyStorer
+
+	ClusterName string
 }
 
 // IssuanceService is the gRPC service for managing workload identity resources.
@@ -61,6 +67,8 @@ type IssuanceService struct {
 	emitter    apievents.Emitter
 	logger     *slog.Logger
 	keyStore   KeyStorer
+
+	clusterName string
 }
 
 // NewIssuanceService returns a new instance of the IssuanceService.
@@ -74,6 +82,8 @@ func NewIssuanceService(cfg *IssuanceServiceConfig) (*IssuanceService, error) {
 		return nil, trace.BadParameter("emitter is required")
 	case cfg.KeyStore == nil:
 		return nil, trace.BadParameter("key store is required")
+	case cfg.ClusterName == "":
+		return nil, trace.BadParameter("cluster name is required")
 	}
 
 	if cfg.Logger == nil {
@@ -83,19 +93,21 @@ func NewIssuanceService(cfg *IssuanceServiceConfig) (*IssuanceService, error) {
 		cfg.Clock = clockwork.NewRealClock()
 	}
 	return &IssuanceService{
-		authorizer: cfg.Authorizer,
-		cache:      cfg.Cache,
-		clock:      cfg.Clock,
-		emitter:    cfg.Emitter,
-		logger:     cfg.Logger,
-		keyStore:   cfg.KeyStore,
+		authorizer:  cfg.Authorizer,
+		cache:       cfg.Cache,
+		clock:       cfg.Clock,
+		emitter:     cfg.Emitter,
+		logger:      cfg.Logger,
+		keyStore:    cfg.KeyStore,
+		clusterName: cfg.ClusterName,
 	}, nil
 }
 
-// GetFieldStringValue
+// getFieldStringValue
 // TODO(noah): This is a fairly gnarly first pass of a reflection based
-// attribute extraction function.
-func GetFieldStringValue(attrs *workloadidentityv1pb.Attrs, attr string) (string, error) {
+// attribute extraction function. This will eventually be replaced potentially
+// by the chosen expression/predicate language mechanism.
+func getFieldStringValue(attrs *workloadidentityv1pb.Attrs, attr string) (string, error) {
 	// join.gitlab.username
 	attrParts := strings.Split(attr, ".")
 	message := attrs.ProtoReflect()
@@ -104,12 +116,16 @@ func GetFieldStringValue(attrs *workloadidentityv1pb.Attrs, attr string) (string
 		if fieldDesc == nil {
 			return "", trace.NotFound("field %q not found", part)
 		}
+		// We expect the final key to point to a string field - otherwise - we
+		// return an error.
 		if i == len(attrParts)-1 {
 			if fieldDesc.Kind() != protoreflect.StringKind {
 				return "", trace.BadParameter("field %q is not a string", part)
 			}
 			return message.Get(fieldDesc).String(), nil
 		}
+		// If we're not processing the final key part, we expect this to point
+		// to a message that we can further explore.
 		if fieldDesc.Kind() != protoreflect.MessageKind {
 			return "", trace.BadParameter("field %q is not a message", part)
 		}
@@ -118,7 +134,30 @@ func GetFieldStringValue(attrs *workloadidentityv1pb.Attrs, attr string) (string
 	return "", nil
 }
 
-func EvaluateRules(
+// This place is not a place of honor...
+// no highly esteemed deed is commemorated here...
+// nothing valued is here.
+//
+// What is here was dangerous and repulsive to us.
+// This message is a warning about danger.
+func templateString(in string, attrs *workloadidentityv1pb.Attrs) (string, error) {
+	re := regexp.MustCompile(`\{\{(.*?)\}\}`)
+	matches := re.FindAllStringSubmatch(in, -1)
+
+	for _, match := range matches {
+		attrKey := strings.Trim(match[0], "{}")
+		attrKey = strings.TrimFunc(attrKey, unicode.IsSpace)
+		value, err := getFieldStringValue(attrs, attrKey)
+		if err != nil {
+			return "", trace.Wrap(err, "fetching attribute value for %q", attrKey)
+		}
+		in = strings.Replace(in, match[0], value, 1)
+	}
+
+	return in, nil
+}
+
+func evaluateRules(
 	wi *workloadidentityv1pb.WorkloadIdentity,
 	attrs *workloadidentityv1pb.Attrs,
 ) error {
@@ -128,7 +167,7 @@ func EvaluateRules(
 ruleLoop:
 	for _, rule := range wi.GetSpec().GetRules().GetAllow() {
 		for _, condition := range rule.GetConditions() {
-			val, err := GetFieldStringValue(attrs, condition.Attribute)
+			val, err := getFieldStringValue(attrs, condition.Attribute)
 			if err != nil {
 				return trace.Wrap(err)
 			}
@@ -169,8 +208,20 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 		Join: &workloadidentityv1pb.JoinAttrs{},
 	}
 
-	if err := EvaluateRules(wi, attrs); err != nil {
+	// Evaluate any rules explicitly configured by the user
+	if err := evaluateRules(wi, attrs); err != nil {
 		return nil, trace.Wrap(err)
+	}
+
+	// Perform any templating
+
+	_, err = spiffeid.FromURI(&url.URL{
+		Scheme: "spiffe",
+		Host:   s.clusterName,
+		Path:   "woof",
+	})
+	if err != nil {
+		return nil, trace.Wrap(err, "creating SPIFFE ID")
 	}
 
 	// TODO: Perform templating
@@ -180,4 +231,14 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 	// Return.
 
 	return nil, trace.NotImplemented("not implemented")
+}
+
+func (s *IssuanceService) issueX509() error {
+	return trace.NotImplemented("womp womp")
+}
+
+const jtiLength = 16
+
+func (s *IssuanceService) issueJWT() error {
+	return trace.NotImplemented("womp womp")
 }

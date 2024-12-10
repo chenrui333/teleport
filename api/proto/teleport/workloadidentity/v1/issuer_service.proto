@@ -89,8 +89,19 @@ message IssueWorkloadIdentityResponse {
   SVID svid = 1;
 }
 
+// TODO: Comment
+message WorkloadAttrsKubernetes {
+  // The namespace of the workload.
+  string namespace = 1;
+  // The name of the workload.
+  string pod_name = 2;
+}
+
 // The attributes provided by `tbot` regarding the workload's attestation.
-message WorkloadAttrs {}
+message WorkloadAttrs {
+  // The Kubernetes-specific attributes.
+  WorkloadAttrsKubernetes kubernetes = 1;
+}
 
 // TODO: Comment
 message JoinAttrs {}
