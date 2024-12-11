@@ -48,7 +48,7 @@ message JWTSVIDParams {
 }
 
 // TODO: Comment
-message SVID {
+message Credential {
   // The TTL that was chosen by the server.
   google.protobuf.Duration ttl = 1;
   // The time that the TTL is reached for this credential.
@@ -67,9 +67,9 @@ message SVID {
   oneof credential {
     // The X509 SVID that was issued.
     // ASN.1 DER encoded X.509 certificate. No PEM.
-    bytes x509 = 7;
+    bytes x509_svid = 7;
     // The JWT SVID that was issued.
-    string jwt = 8;
+    string jwt_svid = 8;
   }
 }
 
@@ -86,7 +86,7 @@ message IssueWorkloadIdentityRequest {
 
 // TODO: Comment
 message IssueWorkloadIdentityResponse {
-  SVID svid = 1;
+  Credential credential = 1;
 }
 
 // TODO: Comment

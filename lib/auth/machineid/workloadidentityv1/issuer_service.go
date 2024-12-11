@@ -19,22 +19,34 @@ package workloadidentityv1
 import (
 	"context"
 	"crypto"
+	"crypto/rand"
+	"crypto/x509"
 	"log/slog"
+	"math/big"
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/gravitational/teleport"
 	workloadidentityv1pb "github.com/gravitational/teleport/api/gen/proto/go/teleport/workloadidentity/v1"
 	"github.com/gravitational/teleport/api/types"
 	apievents "github.com/gravitational/teleport/api/types/events"
 	"github.com/gravitational/teleport/lib/authz"
+	"github.com/gravitational/teleport/lib/events"
+	"github.com/gravitational/teleport/lib/jwt"
+	"github.com/gravitational/teleport/lib/services"
+	"github.com/gravitational/teleport/lib/tlsca"
+	"github.com/gravitational/teleport/lib/utils"
+	"github.com/gravitational/teleport/lib/utils/oidc"
 )
 
 // KeyStorer is an interface that provides methods to retrieve keys and
@@ -44,10 +56,16 @@ type KeyStorer interface {
 	GetJWTSigner(ctx context.Context, ca types.CertAuthority) (crypto.Signer, error)
 }
 
+type issuerCache interface {
+	workloadIdentityReader
+	GetProxies() ([]types.Server, error)
+	GetCertAuthority(ctx context.Context, id types.CertAuthID, loadKeys bool) (types.CertAuthority, error)
+}
+
 // IssuanceServiceConfig holds configuration options for the IssuanceService.
 type IssuanceServiceConfig struct {
 	Authorizer authz.Authorizer
-	Cache      workloadIdentityReader
+	Cache      issuerCache
 	Clock      clockwork.Clock
 	Emitter    apievents.Emitter
 	Logger     *slog.Logger
@@ -62,7 +80,7 @@ type IssuanceService struct {
 	workloadidentityv1pb.UnimplementedWorkloadIdentityIssuanceServiceServer
 
 	authorizer authz.Authorizer
-	cache      workloadIdentityReader
+	cache      issuerCache
 	clock      clockwork.Clock
 	emitter    apievents.Emitter
 	logger     *slog.Logger
@@ -250,19 +268,264 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 	}
 	s.logger.WarnContext(ctx, "spiffeID", "id", spiffeID.String())
 
-	// TODO: Issue X509 or JWT
+	// TODO: Actually like calculate the TTL.
+	ttl := time.Hour
+	notBefore := time.Now().Add(-1 * time.Minute)
+	notAfter := time.Now().Add(ttl)
 
-	// Return.
+	// Prepare event
+	evt := &apievents.SPIFFESVIDIssued{
+		Metadata: apievents.Metadata{
+			Type: events.SPIFFESVIDIssuedEvent,
+			Code: events.SPIFFESVIDIssuedSuccessCode,
+		},
+		UserMetadata:       authz.ClientUserMetadata(ctx),
+		ConnectionMetadata: authz.ConnectionMetadata(ctx),
+		SPIFFEID:           spiffeID.String(),
+		Hint:               wi.GetSpec().GetSpiffe().GetHint(),
+	}
+	cred := &workloadidentityv1pb.Credential{
+		WorkloadIdentityName:     wi.GetMetadata().GetName(),
+		WorkloadIdentityRevision: wi.GetMetadata().GetRevision(),
 
-	return nil, trace.NotImplemented("not implemented")
+		SpiffeId: spiffeID.String(),
+		Hint:     wi.GetSpec().GetSpiffe().GetHint(),
+
+		Expiry: timestamppb.New(notAfter),
+		Ttl:    durationpb.New(ttl),
+	}
+
+	switch v := req.GetCredential().(type) {
+	case *workloadidentityv1pb.IssueWorkloadIdentityRequest_X509SvidParams:
+		evt.SVIDType = "x509"
+		certDer, certSerial, err := s.issueX509SVID(
+			ctx,
+			v.X509SvidParams,
+			notBefore,
+			notAfter,
+			spiffeID,
+		)
+		if err != nil {
+			return nil, trace.Wrap(err, "issuing X509 SVID")
+		}
+		cred.Credential = &workloadidentityv1pb.Credential_X509Svid{
+			X509Svid: certDer,
+		}
+		evt.SerialNumber = serialString(certSerial)
+	case *workloadidentityv1pb.IssueWorkloadIdentityRequest_JwtSvidParams:
+		evt.SVIDType = "jwt"
+		signedJwt, jti, err := s.issueJWTSVID(
+			ctx,
+			v.JwtSvidParams,
+			ttl,
+			spiffeID,
+		)
+		if err != nil {
+			return nil, trace.Wrap(err, "issuing JWT SVID")
+		}
+		cred.Credential = &workloadidentityv1pb.Credential_JwtSvid{
+			JwtSvid: signedJwt,
+		}
+		evt.JTI = jti
+	default:
+		return nil, trace.BadParameter("credential: unknown type %T", req.GetCredential())
+	}
+
+	if err := s.emitter.EmitAuditEvent(ctx, evt); err != nil {
+		s.logger.WarnContext(
+			ctx,
+			"failed to emit audit event for SVID issuance",
+			"error", err,
+			"event", evt,
+		)
+	}
+
+	return &workloadidentityv1pb.IssueWorkloadIdentityResponse{
+		Credential: cred,
+	}, nil
 }
 
-func (s *IssuanceService) issueX509() error {
-	return trace.NotImplemented("womp womp")
+func generateCertSerial() (*big.Int, error) {
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	return rand.Int(rand.Reader, serialNumberLimit)
+}
+
+func x509Template(
+	serialNumber *big.Int,
+	notBefore time.Time,
+	notAfter time.Time,
+	spiffeID spiffeid.ID,
+) *x509.Certificate {
+	return &x509.Certificate{
+		SerialNumber: serialNumber,
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
+		// SPEC(X509-SVID) 4.3. Key Usage:
+		// - Leaf SVIDs MUST NOT set keyCertSign or cRLSign.
+		// - Leaf SVIDs MUST set digitalSignature
+		// - They MAY set keyEncipherment and/or keyAgreement;
+		KeyUsage: x509.KeyUsageDigitalSignature |
+			x509.KeyUsageKeyEncipherment |
+			x509.KeyUsageKeyAgreement,
+		// SPEC(X509-SVID) 4.4. Extended Key Usage:
+		// - Leaf SVIDs SHOULD include this extension, and it MAY be marked as critical.
+		// - When included, fields id-kp-serverAuth and id-kp-clientAuth MUST be set.
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth,
+		},
+		// SPEC(X509-SVID) 4.1. Basic Constraints:
+		// - leaf certificates MUST set the cA field to false
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+
+		// SPEC(X509-SVID) 2. SPIFFE ID:
+		// - The corresponding SPIFFE ID is set as a URI type in the Subject Alternative Name extension
+		// - An X.509 SVID MUST contain exactly one URI SAN, and by extension, exactly one SPIFFE ID.
+		// - An X.509 SVID MAY contain any number of other SAN field types, including DNS SANs.
+		URIs: []*url.URL{spiffeID.URL()},
+	}
+}
+
+func (s *IssuanceService) getX509CA(
+	ctx context.Context,
+) (*tlsca.CertAuthority, error) {
+	ca, err := s.cache.GetCertAuthority(ctx, types.CertAuthID{
+		Type:       types.SPIFFECA,
+		DomainName: s.clusterName,
+	}, true)
+	tlsCert, tlsSigner, err := s.keyStore.GetTLSCertAndSigner(ctx, ca)
+	if err != nil {
+		return nil, trace.Wrap(err, "getting CA cert and key")
+	}
+	tlsCA, err := tlsca.FromCertAndSigner(tlsCert, tlsSigner)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	return tlsCA, nil
+}
+
+func (s *IssuanceService) issueX509SVID(
+	ctx context.Context,
+	params *workloadidentityv1pb.X509SVIDParams,
+	notBefore time.Time,
+	notAfter time.Time,
+	spiffeID spiffeid.ID,
+) ([]byte, *big.Int, error) {
+	switch {
+	case params == nil:
+		return nil, nil, trace.BadParameter("x509_svid_params: is required")
+	case len(params.PublicKey) == 0:
+		return nil, nil, trace.BadParameter("x509_svid_params.public_key: is required")
+	}
+
+	pubKey, err := x509.ParsePKIXPublicKey(params.PublicKey)
+	if err != nil {
+		return nil, nil, trace.Wrap(err, "parsing public key")
+	}
+
+	certSerial, err := generateCertSerial()
+	if err != nil {
+		return nil, nil, trace.Wrap(err, "generating certificate serial")
+	}
+	template := x509Template(certSerial, notBefore, notAfter, spiffeID)
+
+	ca, err := s.getX509CA(ctx)
+	if err != nil {
+		return nil, nil, trace.Wrap(err, "fetching CA to sign X509 SVID")
+	}
+	certBytes, err := x509.CreateCertificate(
+		rand.Reader, template, ca.Cert, pubKey, ca.Signer,
+	)
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+
+	return certBytes, certSerial, trace.NotImplemented("womp womp")
 }
 
 const jtiLength = 16
 
-func (s *IssuanceService) issueJWT() error {
-	return trace.NotImplemented("womp womp")
+func (s *IssuanceService) getJWTIssuerKey(
+	ctx context.Context,
+) (*jwt.Key, error) {
+	ca, err := s.cache.GetCertAuthority(ctx, types.CertAuthID{
+		Type:       types.SPIFFECA,
+		DomainName: s.clusterName,
+	}, true)
+	if err != nil {
+		return nil, trace.Wrap(err, "getting SPIFFE CA")
+	}
+	jwtSigner, err := s.keyStore.GetJWTSigner(ctx, ca)
+	if err != nil {
+		return nil, trace.Wrap(err, "getting JWT signer")
+	}
+	jwtKey, err := services.GetJWTSigner(
+		jwtSigner, s.clusterName, s.clock,
+	)
+	if err != nil {
+		return nil, trace.Wrap(err, "creating JWT signer")
+	}
+	return jwtKey, nil
+}
+
+func (s *IssuanceService) issueJWTSVID(
+	ctx context.Context,
+	params *workloadidentityv1pb.JWTSVIDParams,
+	ttl time.Duration,
+	spiffeID spiffeid.ID,
+) (string, string, error) {
+	switch {
+	case params == nil:
+		return "", "", trace.BadParameter("jwt_svid_params: is required")
+	case len(params.Audiences) == 0:
+		return "", "", trace.BadParameter("jwt_svid_params.audiences: at least one audience should be specified")
+	}
+
+	jti, err := utils.CryptoRandomHex(jtiLength)
+	if err != nil {
+		return "", "", trace.Wrap(err, "generating JTI")
+	}
+
+	key, err := s.getJWTIssuerKey(ctx)
+	if err != nil {
+		return "", "", trace.Wrap(err, "getting JWT issuer key")
+	}
+
+	// Determine the public address of the proxy for inclusion in the JWT as
+	// the issuer for purposes of OIDC compatibility.
+	issuer, err := oidc.IssuerForCluster(ctx, s.cache, "/workload-identity")
+	if err != nil {
+		return "", "", trace.Wrap(err, "determining issuer URI")
+	}
+
+	// TODO: Ideally we want to feed in the NotBefore/Expiry so we know these
+	// values for auditing purposes.
+	signed, err := key.SignJWTSVID(jwt.SignParamsJWTSVID{
+		Audiences: params.Audiences,
+		SPIFFEID:  spiffeID,
+		TTL:       ttl,
+		JTI:       jti,
+		Issuer:    issuer,
+	})
+	if err != nil {
+		return "", "", trace.Wrap(err, "signing jwt")
+	}
+
+	return signed, jti, nil
+}
+
+func serialString(serial *big.Int) string {
+	hex := serial.Text(16)
+	if len(hex)%2 == 1 {
+		hex = "0" + hex
+	}
+
+	out := strings.Builder{}
+	for i := 0; i < len(hex); i += 2 {
+		if i != 0 {
+			out.WriteString(":")
+		}
+		out.WriteString(hex[i : i+2])
+	}
+	return out.String()
 }
