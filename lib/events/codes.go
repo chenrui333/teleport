@@ -581,6 +581,9 @@ const (
 	// AccessListMemberDeleteAllForAccessListFailureCode is the access list member delete failure code.
 	AccessListMemberDeleteAllForAccessListFailureCode = "TAL008E"
 
+	// AccessListSkippedCode is the access list skipped code. This event is a warning that an access list has an error and was not applied upon login.
+	AccessListSkippedCode = "TAL009W"
+
 	// SecReportsAuditQueryRunCode is used when a custom Security Reports Query is run.
 	SecReportsAuditQueryRunCode = "SRE001I"
 

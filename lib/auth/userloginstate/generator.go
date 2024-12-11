@@ -29,10 +29,12 @@ import (
 	usageeventsv1 "github.com/gravitational/teleport/api/gen/proto/go/usageevents/v1"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/types/accesslist"
+	apievents "github.com/gravitational/teleport/api/types/events"
 	"github.com/gravitational/teleport/api/types/header"
 	"github.com/gravitational/teleport/api/types/userloginstate"
 	"github.com/gravitational/teleport/api/utils"
 	"github.com/gravitational/teleport/lib/accesslists"
+	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 )
@@ -59,6 +61,9 @@ type GeneratorConfig struct {
 
 	// Clock is the clock to use for the generator.
 	Clock clockwork.Clock
+
+	// Emitter is the emitter for audit events.
+	Emitter apievents.Emitter
 }
 
 // UsageEventsClient is an interface that allows for submitting usage events to Posthog.
@@ -78,6 +83,10 @@ func (g *GeneratorConfig) CheckAndSetDefaults() error {
 
 	if g.Access == nil {
 		return trace.BadParameter("missing access")
+	}
+
+	if g.Emitter == nil {
+		return trace.BadParameter("missing audit event emitter")
 	}
 
 	if modules.GetModules().Features().Cloud {
@@ -102,6 +111,7 @@ type Generator struct {
 	access      services.Access
 	usageEvents UsageEventsClient
 	clock       clockwork.Clock
+	emitter     apievents.Emitter
 }
 
 // NewGenerator creates a new user login state generator.
@@ -116,6 +126,7 @@ func NewGenerator(config GeneratorConfig) (*Generator, error) {
 		access:      config.Access,
 		usageEvents: config.UsageEvents,
 		clock:       config.Clock,
+		emitter:     config.Emitter,
 	}, nil
 }
 
@@ -186,8 +197,6 @@ func (g *Generator) Generate(ctx context.Context, user types.User, ulsService se
 	return uls, nil
 }
 
-// addAccessListsToState will add the user's applicable access lists to the user login state,
-// returning any inherited roles and traits.
 func (g *Generator) addAccessListsToState(ctx context.Context, user types.User, state *userloginstate.UserLoginState) ([]string, map[string][]string, error) {
 	accessLists, err := g.accessLists.GetAccessLists(ctx)
 	if err != nil {
@@ -198,31 +207,74 @@ func (g *Generator) addAccessListsToState(ctx context.Context, user types.User, 
 	allInheritedTraits := make(map[string][]string)
 
 	for _, accessList := range accessLists {
+		// Helper function to validate that the roles in the access list exist, and emit an audit event if needed.
+		validateRoles := func(roles []string) (bool, error) {
+			for _, role := range roles {
+				_, err := g.access.GetRole(ctx, role)
+				if err != nil {
+					if trace.IsNotFound(err) {
+						if err := g.emitter.EmitAuditEvent(ctx, &apievents.AccessListSkipped{
+							Metadata: apievents.Metadata{
+								Type: events.AccessListSkippedEvent,
+								Code: events.AccessListSkippedCode,
+							},
+							AccessListSkippedMetadata: apievents.AccessListSkippedMetadata{
+								AccessListName: accessList.Spec.Title,
+								User:           user.GetName(),
+								MissingRole:    role,
+							},
+							Status: apievents.Status{
+								Success:     false,
+								Error:       trace.Unwrap(err).Error(),
+								UserMessage: "access list skipped because it references non-existent role",
+							},
+						}); err != nil {
+							g.log.WithError(err).Warn("Failed to emit access list skipped warning audit event.")
+						}
+						return false, nil
+					}
+					return false, trace.Wrap(err)
+				}
+			}
+			return true, nil
+		}
+
 		// Grants are inherited if the user is a member of the access list, explicitly or via inheritance.
 		membershipKind, err := accesslists.IsAccessListMember(ctx, user, accessList, g.accessLists, g.accessLists, g.clock)
 		if err != nil {
 			g.log.WithError(err).Warn("checking access list membership")
 		}
 		if err == nil && membershipKind != accesslists.MembershipOrOwnershipTypeNone {
-			g.grantRolesAndTraits(accessList.Spec.Grants, state)
-			if membershipKind == accesslists.MembershipOrOwnershipTypeInherited {
-				allInheritedRoles = append(allInheritedRoles, accessList.Spec.Grants.Roles...)
-				for k, values := range accessList.Spec.Grants.Traits {
-					allInheritedTraits[k] = append(allInheritedTraits[k], values...)
+			if valid, err := validateRoles(accessList.Spec.Grants.Roles); err != nil {
+				// Skip this access list if there is an error when validating roles.
+				continue
+			} else if valid {
+				g.grantRolesAndTraits(accessList.Spec.Grants, state)
+				if membershipKind == accesslists.MembershipOrOwnershipTypeInherited {
+					allInheritedRoles = append(allInheritedRoles, accessList.Spec.Grants.Roles...)
+					for k, values := range accessList.Spec.Grants.Traits {
+						allInheritedTraits[k] = append(allInheritedTraits[k], values...)
+					}
 				}
 			}
 		}
+
 		// OwnerGrants are inherited if the user is an owner of the access list, explicitly or via inheritance.
 		ownershipType, err := accesslists.IsAccessListOwner(ctx, user, accessList, g.accessLists, g.accessLists, g.clock)
 		if err != nil {
 			g.log.WithError(err).Warn("checking access list ownership")
 		}
 		if err == nil && ownershipType != accesslists.MembershipOrOwnershipTypeNone {
-			g.grantRolesAndTraits(accessList.Spec.OwnerGrants, state)
-			if ownershipType == accesslists.MembershipOrOwnershipTypeInherited {
-				allInheritedRoles = append(allInheritedRoles, accessList.Spec.OwnerGrants.Roles...)
-				for k, values := range accessList.Spec.OwnerGrants.Traits {
-					allInheritedTraits[k] = append(allInheritedTraits[k], values...)
+			if valid, err := validateRoles(accessList.Spec.OwnerGrants.Roles); err != nil {
+				// Skip this access list if there is an error when validating roles.
+				continue
+			} else if valid {
+				g.grantRolesAndTraits(accessList.Spec.OwnerGrants, state)
+				if ownershipType == accesslists.MembershipOrOwnershipTypeInherited {
+					allInheritedRoles = append(allInheritedRoles, accessList.Spec.OwnerGrants.Roles...)
+					for k, values := range accessList.Spec.OwnerGrants.Traits {
+						allInheritedTraits[k] = append(allInheritedTraits[k], values...)
+					}
 				}
 			}
 		}
@@ -259,7 +311,6 @@ func (g *Generator) postProcess(ctx context.Context, state *userloginstate.UserL
 	}
 
 	// Make sure all the roles exist. If they don't, error out.
-	// Since InheritedRoles are always a subset of Roles, we don't need to check them.
 	var existingRoles []string
 	for _, role := range state.Spec.Roles {
 		_, err := g.access.GetRole(ctx, role)

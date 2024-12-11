@@ -604,6 +604,10 @@ func ToOneOf(in AuditEvent) (*OneOf, error) {
 		out.Event = &OneOf_AccessListMemberDeleteAllForAccessList{
 			AccessListMemberDeleteAllForAccessList: e,
 		}
+	case *AccessListSkipped:
+		out.Event = &OneOf_AccessListSkipped{
+			AccessListSkipped: e,
+		}
 	case *AuditQueryRun:
 		out.Event = &OneOf_AuditQueryRun{
 			AuditQueryRun: e,

@@ -4708,6 +4708,7 @@ message OneOf {
     events.WorkloadIdentityUpdate WorkloadIdentityUpdate = 195;
     events.WorkloadIdentityDelete WorkloadIdentityDelete = 196;
     events.GitCommand GitCommand = 197;
+    events.AccessListSkipped AccessListSkipped = 198;
   }
 }
 
@@ -7866,4 +7867,39 @@ message GitCommandAction {
   string Old = 3 [(gogoproto.jsontag) = "old,omitempty"];
   // New is the new hash.
   string New = 4 [(gogoproto.jsontag) = "new,omitempty"];
+}
+
+// AccessListSkippedMetadata contains metadata for access list skipped events.
+message AccessListSkippedMetadata {
+  // AccessListName is the name of the access list that was skipped.
+  string AccessListName = 1 [(gogoproto.jsontag) = "access_list_name, omitempty"];
+  // User is the name of the access list member/owner for whom the access list was not applied.
+  string User = 2 [(gogoproto.jsontag) = "user,omitempty"];
+  // MissingRole is the name of the non-existent role being referenced by the access list, causing it to be skipped.
+  string MissingRole = 3 [(gogoproto.jsontag) = "missing_role,omitempty"];
+}
+
+// AccessListSkipped is emitted when a user logs in with an invalid access list, resulting in
+// the access list being skipped.
+message AccessListSkipped {
+  // Metadata is common event metadata
+  Metadata Metadata = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.embed) = true,
+    (gogoproto.jsontag) = ""
+  ];
+
+  // AccessListSkippedMetadata is the metadata for this access list skipped event.
+  AccessListSkippedMetadata AccessListSkippedMetadata = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.embed) = true,
+    (gogoproto.jsontag) = ""
+  ];
+
+  // Status contains fields to indicate whether attempt was successful or not.
+  Status Status = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.embed) = true,
+    (gogoproto.jsontag) = ""
+  ];
 }

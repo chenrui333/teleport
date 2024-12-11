@@ -197,6 +197,7 @@ var eventsMap = map[string]apievents.AuditEvent{
 	AccessListMemberUpdateEvent:                 &apievents.AccessListMemberUpdate{},
 	AccessListMemberDeleteEvent:                 &apievents.AccessListMemberDelete{},
 	AccessListMemberDeleteAllForAccessListEvent: &apievents.AccessListMemberDeleteAllForAccessList{},
+	AccessListSkippedEvent:                      &apievents.AccessListSkipped{},
 	SecReportsAuditQueryRunEvent:                &apievents.AuditQueryRun{},
 	SecReportsReportRunEvent:                    &apievents.SecurityReportRun{},
 	ExternalAuditStorageEnableEvent:             &apievents.ExternalAuditStorageEnable{},
