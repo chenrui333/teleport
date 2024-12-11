@@ -108,8 +108,14 @@ message JoinAttrs {}
 
 // TODO: Comment
 message UserAttrs {
-  // The username of the user.
-  string username = 1;
+  // The name of the user.
+  string name = 1;
+  // Whether the user is a bot.
+  bool is_bot = 2;
+  // If the user is a bot, the name of the bot.
+  string bot_name = 3;
+  // Labels of the user.
+  map<string, string> labels = 4;
 }
 
 // TODO: Comment

@@ -213,7 +213,10 @@ func (s *IssuanceService) deriveAttrs(
 	attrs := &workloadidentityv1pb.Attrs{
 		Workload: workloadAttrs,
 		User: &workloadidentityv1pb.UserAttrs{
-			Username: authzCtx.User.GetName(),
+			Name:    authzCtx.Identity.GetIdentity().Username,
+			IsBot:   authzCtx.Identity.GetIdentity().BotName != "",
+			BotName: authzCtx.Identity.GetIdentity().BotName,
+			Labels:  authzCtx.User.GetAllLabels(),
 		},
 		Join: &workloadidentityv1pb.JoinAttrs{},
 	}
