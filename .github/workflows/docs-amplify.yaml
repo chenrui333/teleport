@@ -2,6 +2,8 @@ name: Amplify Preview
 on:
   pull_request:
   workflow_dispatch:
+  issue_comment:
+    types: [edited]
   
 permissions:
   pull-requests: write
