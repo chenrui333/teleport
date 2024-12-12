@@ -527,7 +527,9 @@ func makeRawField(field *ast.Field, packageName string) (rawField, error) {
 }
 
 // makeFieldTableInfo assembles a slice of human-readable information about fields
-// within a Go struct to include within the resource reference.
+// within a Go struct to include within the resource reference. Note that
+// makeFieldTableInfo is only concerned with formatting, and cannot determine
+// whether a field type was declared anywhere.
 func makeFieldTableInfo(fields []rawField) ([]Field, error) {
 	var result []Field
 	for _, field := range fields {
@@ -689,7 +691,6 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 		return nil, err
 	}
 
-	var overridden bool
 	description := rs.doc
 
 	// Initialize the return value and insert the root reference entry
@@ -705,13 +706,6 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 	key := PackageInfo{
 		DeclName:    rs.name,
 		PackageName: decl.PackageName,
-	}
-
-	// We are describing this reference entry via a YAML example override,
-	// so we don't create reference entries for its fields.
-	if overridden {
-		refs[key] = entry
-		return refs, nil
 	}
 
 	fld, err := makeFieldTableInfo(fieldsToProcess)
