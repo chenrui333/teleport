@@ -205,7 +205,7 @@ type Server struct {
 			},
 		},
 		{
-			description: "named scalar type with no override",
+			description: "named scalar type",
 			source: `package mypkg
 // Server includes information about a server registered with Teleport.
 type Server struct {
@@ -213,6 +213,7 @@ type Server struct {
     Name string BACKTICKprotobuf:"bytes,1,opt,name=Name,proto3" json:"name"BACKTICK
     // Spec contains information about the server.
     Spec types.ServerSpecV1 BACKTICKjson:"spec"BACKTICK
+    // Labels for the server
     Label Labels
 }
 `,
@@ -223,10 +224,45 @@ type Server struct {
 type Labels []string
 `,
 			},
-			errorSubstring: "Example YAML",
+			expected: map[PackageInfo]ReferenceEntry{
+				PackageInfo{
+					DeclName:    "Server",
+					PackageName: "mypkg",
+				}: ReferenceEntry{
+					SectionName: "Server",
+					Description: "Includes information about a server registered with Teleport.",
+					SourcePath:  "myfile.go",
+					Fields: []Field{
+						{
+							Name:        "name",
+							Description: "The name of the resource.",
+							Type:        "string",
+						},
+						{
+							Name:        "spec",
+							Description: "Contains information about the server.",
+							Type:        "",
+						},
+						{
+							Name:        "Label",
+							Description: "Labels for the server",
+							Type:        "[Labels](#labels)",
+						},
+					},
+				},
+				PackageInfo{
+					DeclName:    "Labels",
+					PackageName: "mypkg",
+				}: ReferenceEntry{
+					SectionName: "Labels",
+					Description: "A slice of strings that we'll process downstream",
+					SourcePath:  "myfile0.go",
+					Fields:      nil,
+				},
+			},
 		},
 		{
-			description: "custom type fields with no override and custom JSON unmarshaller",
+			description: "custom type fields with a custom JSON unmarshaller",
 			source: `
 package mypkg
 
