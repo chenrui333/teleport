@@ -169,7 +169,7 @@ type Metadata struct {
 				},
 			}},
 		{
-			description: "a custom type field",
+			description: "an undeclared custom type field",
 			source: `
 package mypkg
 
@@ -181,8 +181,28 @@ type Server struct {
     Spec types.ServerSpecV1 BACKTICKjson:"spec"BACKTICK
 }
 `,
-			expected:       nil,
-			errorSubstring: "not declared",
+			expected: map[PackageInfo]ReferenceEntry{
+				PackageInfo{
+					DeclName:    "Server",
+					PackageName: "mypkg",
+				}: ReferenceEntry{
+					SectionName: "Server",
+					Description: "Includes information about a server registered with Teleport.",
+					SourcePath:  "myfile.go",
+					Fields: []Field{
+						{
+							Name:        "name",
+							Description: "The name of the resource.",
+							Type:        "string",
+						},
+						{
+							Name:        "spec",
+							Description: "Contains information about the server.",
+							Type:        "",
+						},
+					},
+				},
+			},
 		},
 		{
 			description: "named scalar type with no override",
