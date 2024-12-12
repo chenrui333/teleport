@@ -18,9 +18,11 @@
 
 import React from 'react';
 
-import { fireEvent, render, screen } from 'design/utils/testing';
+import { fireEvent, render, screen, userEvent } from 'design/utils/testing';
 
-import { MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
+
+import { createMemoryHistory } from 'history';
 
 import { IntegrationList } from 'teleport/Integrations/IntegrationList';
 import {
@@ -28,29 +30,37 @@ import {
   IntegrationStatusCode,
 } from 'teleport/services/integrations';
 
-test('integration list shows edit and view action menu for aws-oidc', () => {
+test('integration list shows edit and view action menu for aws-oidc, row click navigates', async () => {
+  const history = createMemoryHistory();
+  history.push = jest.fn();
+
   render(
-    <MemoryRouter>
+    <Router history={history}>
       <IntegrationList
         list={[
           {
             resourceType: 'integration',
-            name: 'aws',
+            name: 'aws-integration',
             kind: IntegrationKind.AwsOidc,
             statusCode: IntegrationStatusCode.Running,
             spec: { roleArn: '', issuerS3Prefix: '', issuerS3Bucket: '' },
           },
         ]}
       />
-    </MemoryRouter>
+    </Router>
   );
 
   fireEvent.click(screen.getByRole('button', { name: 'Options' }));
   expect(screen.getByText('View Status')).toBeInTheDocument();
   expect(screen.getByText('View Status')).toHaveAttribute(
     'href',
-    '/web/integrations/status/aws-oidc/aws'
+    '/web/integrations/status/aws-oidc/aws-integration'
   );
   expect(screen.getByText('Edit...')).toBeInTheDocument();
   expect(screen.getByText('Delete...')).toBeInTheDocument();
+
+  await userEvent.click(screen.getAllByRole('row')[1]);
+  expect(history.push).toHaveBeenCalledWith(
+    '/web/integrations/status/aws-oidc/aws-integration'
+  );
 });

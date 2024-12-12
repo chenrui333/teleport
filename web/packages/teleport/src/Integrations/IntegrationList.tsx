@@ -66,7 +66,7 @@ export function IntegrationList(props: Props<IntegrationLike>) {
   const history = useHistory();
 
   function handleRowClick(row: IntegrationLike) {
-    if (row.kind !== 'okta') return;
+    if (row.kind !== 'okta' && row.kind !== IntegrationKind.AwsOidc) return;
     history.push(cfg.getIntegrationStatusRoute(row.kind, row.name));
   }
 
