@@ -807,7 +807,7 @@ type Metadata struct {
 			},
 		},
 		{
-			description: "override for struct field",
+			description: "map of strings to an undeclared field",
 			source: `
 package mypkg
 
@@ -842,7 +842,7 @@ type ServerSpecV1 struct {
 						Field{
 							Name:        "label_maps",
 							Description: "Includes a map of strings to labels.",
-							Type:        "See example YAML.",
+							Type:        "",
 						},
 					},
 				},
