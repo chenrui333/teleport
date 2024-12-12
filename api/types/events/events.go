@@ -1962,7 +1962,7 @@ func (m *AccessListMemberDeleteAllForAccessList) TrimToMaxSize(maxSize int) Audi
 	return out
 }
 
-func (m *UserLoginAccessListSkipped) TrimToMaxSize(maxSize int) AuditEvent {
+func (m *UserLoginAccessListInvalid) TrimToMaxSize(maxSize int) AuditEvent {
 	size := m.Size()
 	if size <= maxSize {
 		return m

@@ -362,8 +362,8 @@ func FromEventFields(fields EventFields) (events.AuditEvent, error) {
 		e = &events.AccessListMemberDelete{}
 	case AccessListMemberDeleteAllForAccessListEvent:
 		e = &events.AccessListMemberDeleteAllForAccessList{}
-	case UserLoginAccessListSkippedEvent:
-		e = &events.UserLoginAccessListSkipped{}
+	case UserLoginAccessListInvalidEvent:
+		e = &events.UserLoginAccessListInvalid{}
 	case SecReportsAuditQueryRunEvent:
 		e = &events.AuditQueryRun{}
 	case SecReportsReportRunEvent:

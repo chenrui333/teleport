@@ -4708,7 +4708,7 @@ message OneOf {
     events.WorkloadIdentityUpdate WorkloadIdentityUpdate = 195;
     events.WorkloadIdentityDelete WorkloadIdentityDelete = 196;
     events.GitCommand GitCommand = 197;
-    events.UserLoginAccessListSkipped UserLoginAccessListSkipped = 198;
+    events.UserLoginAccessListInvalid UserLoginAccessListInvalid = 198;
   }
 }
 
@@ -7869,19 +7869,18 @@ message GitCommandAction {
   string New = 4 [(gogoproto.jsontag) = "new,omitempty"];
 }
 
-// AccessListSkippedMetadata contains metadata for access list skipped events.
-message AccessListSkippedMetadata {
-  // AccessListName is the name of the access list that was skipped.
+// AccessListInvalidMetadata contains metadata for access list skipped events.
+message AccessListInvalidMetadata {
+  // AccessListName is the name of the invalid access list.
   string AccessListName = 1 [(gogoproto.jsontag) = "access_list_name, omitempty"];
-  // User is the name of the access list member/owner for whom the access list was not applied.
+  // User is the username of the user who attempted to consume this access list.
   string User = 2 [(gogoproto.jsontag) = "user,omitempty"];
-  // MissingRoles are the names of the non-existent roles being referenced by the access list, causing it to be skipped.
+  // MissingRoles are the names of the non-existent roles being referenced by the access list, causing it to be invalid.
   repeated string MissingRoles = 3 [(gogoproto.jsontag) = "missing_roles,omitempty"];
 }
 
-// UserLoginAccessListSkipped is emitted when a user logs in with an invalid access list, resulting in
-// the access list being skipped.
-message UserLoginAccessListSkipped {
+// UserLoginAccessListInvalid is emitted when a user logs in with an invalid access list.
+message UserLoginAccessListInvalid {
   // Metadata is common event metadata
   Metadata Metadata = 1 [
     (gogoproto.nullable) = false,
@@ -7889,8 +7888,8 @@ message UserLoginAccessListSkipped {
     (gogoproto.jsontag) = ""
   ];
 
-  // AccessListSkippedMetadata is the metadata for this access list skipped event.
-  AccessListSkippedMetadata AccessListSkippedMetadata = 2 [
+  // AccessListInvalidMetadata is the metadata for this access list invalid event.
+  AccessListInvalidMetadata AccessListInvalidMetadata = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.embed) = true,
     (gogoproto.jsontag) = ""

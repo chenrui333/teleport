@@ -458,12 +458,12 @@ func (g *Generator) validateRoles(ctx context.Context, roles []string) ([]string
 
 // emitSkippedAccessListEvent emits an audit log event to warn that an access list was skipped due to it referencing a non-existent role.
 func (g *Generator) emitSkippedAccessListEvent(ctx context.Context, accessListName string, missingRoles []string, username string, returnedErr error) {
-	if err := g.emitter.EmitAuditEvent(ctx, &apievents.UserLoginAccessListSkipped{
+	if err := g.emitter.EmitAuditEvent(ctx, &apievents.UserLoginAccessListInvalid{
 		Metadata: apievents.Metadata{
-			Type: events.UserLoginAccessListSkippedEvent,
-			Code: events.UserLoginAccessListSkippedCode,
+			Type: events.UserLoginAccessListInvalidEvent,
+			Code: events.UserLoginAccessListInvalidCode,
 		},
-		AccessListSkippedMetadata: apievents.AccessListSkippedMetadata{
+		AccessListInvalidMetadata: apievents.AccessListInvalidMetadata{
 			AccessListName: accessListName,
 			User:           username,
 			MissingRoles:   missingRoles,
