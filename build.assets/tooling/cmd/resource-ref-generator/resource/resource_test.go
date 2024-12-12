@@ -71,11 +71,6 @@ type Metadata struct {
 					SectionName: "Metadata",
 					Description: "Describes information about a dynamic resource. Every dynamic resource in Teleport has a metadata object.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-description: "string"
-age: 1
-active: true
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -125,19 +120,6 @@ type Metadata struct {
 					SectionName: "Metadata",
 					Description: "Describes information about a dynamic resource. Every dynamic resource in Teleport has a metadata object.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `names: 
-  - "string"
-  - "string"
-  - "string"
-numbers: 
-  - 1
-  - 1
-  - 1
-booleans: 
-  - true
-  - true
-  - true
-`,
 					Fields: []Field{
 						Field{
 							Name:        "names",
@@ -177,20 +159,6 @@ type Metadata struct {
 					SectionName: "Metadata",
 					Description: "Describes information about a dynamic resource. Every dynamic resource in Teleport has a metadata object.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `attributes: 
-  "string": 
-    - "string"
-    - "string"
-    - "string"
-  "string": 
-    - "string"
-    - "string"
-    - "string"
-  "string": 
-    - "string"
-    - "string"
-    - "string"
-`,
 					Fields: []Field{
 						Field{
 							Name:        "attributes",
@@ -310,13 +278,7 @@ type Server struct {
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `qualities:
-   - "region:us-east-1"
-   - team:security
-     env:dev
-     role:primary
-`,
-					Fields: []Field{},
+					Fields:      []Field{},
 				},
 			},
 		},
@@ -352,9 +314,6 @@ type ServerSpecV1 struct {
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-spec: # [...]
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -374,10 +333,6 @@ spec: # [...]
 					SectionName: "Server Spec",
 					Description: "Includes aspects of a proxied server.",
 					SourcePath:  "myfile0.go",
-					YAMLExample: `address: "string"
-ttl: 1
-is_active: true
-`,
 					Fields: []Field{
 						Field{
 							Name:        "address",
@@ -434,21 +389,6 @@ type Label string
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `spec: # [...]
-label_maps: 
-  - 
-    "string": # [...]
-    "string": # [...]
-    "string": # [...]
-  - 
-    "string": # [...]
-    "string": # [...]
-    "string": # [...]
-  - 
-    "string": # [...]
-    "string": # [...]
-    "string": # [...]
-`,
 					Fields: []Field{
 						Field{
 							Name:        "spec",
@@ -468,8 +408,6 @@ label_maps:
 					SectionName: "Server Spec",
 					Description: "Includes aspects of a proxied server.",
 					SourcePath:  "myfile0.go",
-					YAMLExample: `address: "string"
-`,
 					Fields: []Field{
 						Field{
 							Name:        "address",
@@ -485,9 +423,7 @@ label_maps:
 					SectionName: "Label",
 					Description: "A custom type that we unmarshal in a non-default way.",
 					SourcePath:  "myfile1.go",
-					YAMLExample: `["my_value0", "my_value1", "my_value2"]
-`,
-					Fields: []Field{},
+					Fields:      []Field{},
 				},
 			},
 		},
@@ -519,9 +455,7 @@ type ServerImplementation interface{
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: MyServer
-`,
-					Fields: []Field{},
+					Fields:      []Field{},
 				},
 			},
 		},
@@ -572,10 +506,6 @@ type Metadata struct {
 							Type:        "Boolean",
 						},
 					},
-					YAMLExample: `alias: "string"
-name: "string"
-active: true
-`,
 				},
 			},
 		},
@@ -626,10 +556,6 @@ type Metadata struct {
 							Type:        "Boolean",
 						},
 					},
-					YAMLExample: `alias: "string"
-name: "string"
-active: true
-`,
 				},
 			},
 		},
@@ -686,10 +612,6 @@ type ActivityStatus struct{
 							Type:        "Boolean",
 						},
 					},
-					YAMLExample: `alias: "string"
-name: "string"
-active: true
-`,
 				},
 			},
 		},
@@ -746,10 +668,6 @@ type ActivityStatus struct{
 							Type:        "Boolean",
 						},
 					},
-					YAMLExample: `alias: "string"
-name: "string"
-active: true
-`,
 				},
 			},
 		},
@@ -776,8 +694,6 @@ type Metadata struct {
 					SectionName: "Metadata",
 					Description: "Describes information about a dynamic resource. Every dynamic resource in Teleport has a metadata object.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -831,9 +747,6 @@ type Metadata struct {
 							Type:        "[Metadata](#metadata)",
 						},
 					},
-					YAMLExample: `kind: "string"
-metadata: # [...]
-`,
 				},
 				PackageInfo{
 					DeclName:    "Metadata",
@@ -854,9 +767,6 @@ metadata: # [...]
 							Type:        "string",
 						},
 					},
-					YAMLExample: `name: "string"
-description: "string"
-`,
 				},
 			},
 		},
@@ -894,8 +804,6 @@ type Metadata struct {
 							Type:        "[Metadata](#metadata)",
 						},
 					},
-					YAMLExample: `metadata: # [...]
-`,
 				},
 				PackageInfo{
 					DeclName:    "Metadata",
@@ -911,8 +819,6 @@ type Metadata struct {
 							Type:        "string",
 						},
 					},
-					YAMLExample: `name: "string"
-`,
 				},
 			},
 		},
@@ -951,13 +857,6 @@ type ServerSpecV1 struct {
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-label_maps: 
-- label1: ["my_value0", "my_value1", "my_value2"]
-  label2: ["my_value0", "my_value1", "my_value2"]
-- label3: ["my_value0", "my_value1", "my_value2"]
-  label4: ["my_value0", "my_value1", "my_value2"]
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -1015,13 +914,6 @@ type Label struct {
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-label_maps: 
-- label1: ["my_value0", "my_value1", "my_value2"]
-  label2: ["my_value0", "my_value1", "my_value2"]
-- label3: ["my_value0", "my_value1", "my_value2"]
-  label4: ["my_value0", "my_value1", "my_value2"]
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -1069,8 +961,6 @@ func (stream *streamFunc[T]) Next() bool {
 					SectionName: "Resource",
 					Description: "A resource.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -1119,9 +1009,6 @@ type Resource struct {
 					SectionName: "Resource",
 					Description: "A resource.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-expiry: 5h
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -1160,9 +1047,6 @@ type Metadata struct {
 					SectionName: "Metadata",
 					Description: "Describes information about a dynamic resource. Every dynamic resource in Teleport has a metadata object.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-private_key: BASE64_STRING
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -1214,9 +1098,6 @@ type ServerSpec struct {
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `name: "string"
-spec: # [...]
-`,
 					Fields: []Field{
 						Field{
 							Name:        "name",
@@ -1236,8 +1117,6 @@ spec: # [...]
 					SectionName: "Server Spec",
 					Description: "Includes aspects of a proxied server.",
 					SourcePath:  "myfile0.go",
-					YAMLExample: `address: "string"
-`,
 					Fields: []Field{
 						Field{
 							Name:        "address",
@@ -1284,8 +1163,6 @@ type AddressInfo struct {
 					SectionName: "Server",
 					Description: "Includes information about a server registered with Teleport.",
 					SourcePath:  "myfile.go",
-					YAMLExample: `spec: # [...]
-`,
 					Fields: []Field{
 						Field{
 							Name:        "spec",
@@ -1300,8 +1177,6 @@ type AddressInfo struct {
 					SectionName: "Server Spec",
 					Description: "Includes aspects of a proxied server.",
 					SourcePath:  "myfile0.go",
-					YAMLExample: `info: # [...]
-`,
 					Fields: []Field{
 						Field{
 							Name:        "info",
@@ -1317,8 +1192,6 @@ type AddressInfo struct {
 					SectionName: "Address Info",
 					Description: "Provides information about an address.",
 					SourcePath:  "myfile1.go",
-					YAMLExample: `address: "string"
-`,
 					Fields: []Field{
 						{
 							Name:        "address",
@@ -1638,200 +1511,6 @@ func TestDescriptionWithoutName(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
 			assert.Equal(t, c.expected, descriptionWithoutName(c.input, c.name))
-		})
-	}
-}
-
-func TestMakeYAMLExample(t *testing.T) {
-	cases := []struct {
-		description string
-		input       []rawField
-		expected    string
-	}{
-		{
-			description: "all scalars",
-			input: []rawField{
-				rawField{
-					doc:  "myInt is an int",
-					kind: yamlNumber{},
-					name: "myInt",
-					tags: `json:"my_int"`,
-				},
-				rawField{
-					doc:  "myBool is a Boolean",
-					kind: yamlBool{},
-					name: "myBool",
-					tags: `json:"my_bool"`,
-				},
-				rawField{
-					doc:  "myString is a string",
-					kind: yamlString{},
-					tags: `json:"my_string"`,
-				},
-			},
-			expected: `my_int: 1
-my_bool: true
-my_string: "string"
-`,
-		},
-		{
-			description: "sequence of sequence of strings",
-			input: []rawField{
-				rawField{
-					name:     "mySeq",
-					jsonName: "my_seq",
-					doc:      "mySeq is a sequence of sequences of strings",
-					tags:     `json:"my_seq"`,
-					kind: yamlSequence{
-						elementKind: yamlSequence{
-							elementKind: yamlString{},
-						},
-					},
-				},
-			},
-			expected: `my_seq: 
-  - 
-    - "string"
-    - "string"
-    - "string"
-  - 
-    - "string"
-    - "string"
-    - "string"
-  - 
-    - "string"
-    - "string"
-    - "string"
-`,
-		},
-		{
-			description: "maps of numbers to strings",
-			input: []rawField{
-				rawField{
-					name:     "myMap",
-					jsonName: "my_map",
-					doc:      "myMap is a map of ints to strings",
-					tags:     `json:"my_map"`,
-					kind: yamlMapping{
-						keyKind:   yamlNumber{},
-						valueKind: yamlString{},
-					},
-				},
-			},
-			expected: `my_map: 
-  1: "string"
-  1: "string"
-  1: "string"
-`,
-		},
-		{
-			description: "sequence of maps of strings to Booleans",
-			input: []rawField{
-				rawField{
-					name:     "mySeq",
-					jsonName: "my_seq",
-					doc:      "mySeq is a complex type",
-					tags:     `json:"my_seq"`,
-					kind: yamlSequence{
-						elementKind: yamlMapping{
-							keyKind:   yamlString{},
-							valueKind: yamlBool{},
-						},
-					},
-				},
-			},
-			expected: `my_seq: 
-  - 
-    "string": true
-    "string": true
-    "string": true
-  - 
-    "string": true
-    "string": true
-    "string": true
-  - 
-    "string": true
-    "string": true
-    "string": true
-`,
-		},
-		{
-			description: "sequences of custom types",
-			input: []rawField{
-				rawField{
-					name:     "labels",
-					jsonName: "labels",
-					doc:      "labels is a list of labels",
-					tags:     `json:"labels"`,
-					kind: yamlSequence{
-						elementKind: yamlCustomType{
-							name: "label",
-							declarationInfo: PackageInfo{
-								DeclName:    "label",
-								PackageName: "mypkg",
-							},
-						},
-					},
-				},
-			},
-			expected: `labels: 
-  - # [...]
-  - # [...]
-  - # [...]
-`,
-		},
-		{
-			description: "maps of strings to custom types",
-			input: []rawField{
-				rawField{
-					name:     "labels",
-					jsonName: "labels",
-					doc:      "labels is a map of strings to labels",
-					tags:     `json:"labels"`,
-					kind: yamlMapping{
-						keyKind: yamlString{},
-						valueKind: yamlCustomType{
-							name: "label",
-							declarationInfo: PackageInfo{
-								DeclName:    "label",
-								PackageName: "mypkg",
-							},
-						},
-					},
-				},
-			},
-			expected: `labels: 
-  "string": # [...]
-  "string": # [...]
-  "string": # [...]
-`,
-		},
-		{
-			description: "overidden field",
-			input: []rawField{
-				{
-					name:     "duration",
-					jsonName: "duration",
-					doc:      "Example YAML:\n---\n5h",
-					tags:     `json:"duration"`,
-					kind: yamlCustomType{
-						name: "duration",
-						declarationInfo: PackageInfo{
-							DeclName:    "Duration",
-							PackageName: "time",
-						},
-					},
-				},
-			},
-			expected: `duration: 5h`,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.description, func(t *testing.T) {
-			e, err := makeYAMLExample(c.input)
-			assert.NoError(t, err)
-			assert.Equal(t, c.expected, e)
 		})
 	}
 }

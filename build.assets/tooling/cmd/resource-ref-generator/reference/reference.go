@@ -51,7 +51,7 @@ type resourceSection struct {
 
 // Intended to be executed with a ReferenceContent.
 // Ampersands are replaced with backticks.
-var referenceTemplate string = strings.ReplaceAll(`
+var referenceTemplate string = `
 ## Resources
 
 {{ range .Resources }}
@@ -73,11 +73,6 @@ var referenceTemplate string = strings.ReplaceAll(`
 {{ end }} 
 {{ end }}
 
-Example:
-
-&&&yaml
-{{ .YAMLExample }}
-&&&
 {{ end }}
 
 ## Resource fields
@@ -97,13 +92,8 @@ Example:
 {{ end }} 
 {{ end }}
 
-Example:
-
-&&&yaml
-{{ .YAMLExample }}
-&&&
 {{ end }}
-`, "&", "`")
+`
 
 // TypeInfo represents the name and package name of an exported Go type. It
 // makes no guarantees about whether the type was actually declared within the

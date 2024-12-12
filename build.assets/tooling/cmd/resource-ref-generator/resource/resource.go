@@ -17,7 +17,6 @@
 package resource
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -43,7 +42,6 @@ type ReferenceEntry struct {
 	Description string
 	SourcePath  string
 	Fields      []Field
-	YAMLExample string
 }
 
 // DeclarationInfo includes data about a declaration so the generator can
@@ -369,32 +367,6 @@ func getRawTypes(decl DeclarationInfo) (rawType, error) {
 	}
 
 	return result, nil
-}
-
-// makeYAMLExample creates an example YAML document illustrating the fields
-// within a declaration. This appears at the end of a section within the
-// reference.
-func makeYAMLExample(fields []rawField) (string, error) {
-	var buf bytes.Buffer
-
-	for _, field := range fields {
-		var example string
-		// There is a predefined YAML example in the field comment, so
-		// use that.
-		if strings.Contains(field.doc, yamlExampleDelimiter) {
-			sides := strings.Split(field.doc, yamlExampleDelimiter)
-			if len(sides) != 2 {
-				return "", errors.New("malformed example YAML in description: " + field.doc)
-			}
-			example = sides[1]
-		} else {
-			example = field.kind.formatForExampleYAML(0) + "\n"
-		}
-		buf.WriteString(getJSONTag(field.tags) + ": ")
-		buf.WriteString(example)
-	}
-
-	return buf.String(), nil
 }
 
 // Key-value pair for the "json" tag within a struct tag.  See:
@@ -730,41 +702,8 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 		return nil, err
 	}
 
-	// Make the example YAML string. This can come from:
-	// - The fields of decl, if decl is a struct.
-	// - If a comment above decl includes the YAML example delimiter, use
-	//   the example provided under the delimiter in the reference without
-	//   processing struct fields in decl.
 	var overridden bool
 	description := rs.doc
-	var example string
-	if strings.Contains(rs.doc, yamlExampleDelimiter) {
-		sides := strings.Split(rs.doc, yamlExampleDelimiter)
-		if len(sides) != 2 {
-			return nil, errors.New("malformed example YAML in description: " + rs.doc)
-		}
-		example = sides[1]
-		description = sides[0]
-		overridden = true
-	} else {
-		m := allMethods[PackageInfo{
-			DeclName:    rs.name,
-			PackageName: decl.PackageName,
-		}]
-		for _, e := range m {
-			if e.Name == "UnmarshalYAML" || e.Name == "UnmarshalJSON" {
-				return nil, fmt.Errorf("%v: type %v.%v has a custom unmarshaler, so it needs a custom YAML example, a comment beginning %q", decl.FilePath, decl.PackageName, rs.name, yamlExampleDelimiter)
-			}
-		}
-
-		if len(rs.fields) == 0 {
-			return nil, fmt.Errorf("%v: declaration %v has no fields and no example YAML in the GoDoc", decl.FilePath, rs.name)
-		}
-		example, err = makeYAMLExample(fieldsToProcess)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	// Initialize the return value and insert the root reference entry
 	// provided by decl.
@@ -774,7 +713,6 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 		SectionName: makeSectionName(rs.name),
 		Description: descriptionWithoutName(description, rs.name),
 		SourcePath:  decl.FilePath,
-		YAMLExample: example,
 		Fields:      []Field{},
 	}
 	key := PackageInfo{
