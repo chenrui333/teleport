@@ -742,15 +742,15 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 			if ok {
 				d.PackageName = i
 			}
+
+			// Get information about the field type's declaration.
+			// If we can't find it, it means the field type was
+			// probably declared in the standard library or
+			// third-party package. In this case, leave it to the
+			// GoDoc to describe the field type.
 			gd, ok := allDecls[d]
 			if !ok {
-				return nil, fmt.Errorf(`%v: field type %v.%v of %v.%v was not declared anywhere in the source, and was probably declared in a third-party package or the standard library.`,
-					decl.FilePath,
-					d.PackageName,
-					d.DeclName,
-					key.PackageName,
-					key.DeclName,
-				)
+				continue
 			}
 			r, err := ReferenceDataFromDeclaration(gd, allDecls, allMethods)
 			if errors.Is(err, NotAGenDeclError{}) {
