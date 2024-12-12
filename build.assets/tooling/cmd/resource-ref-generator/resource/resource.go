@@ -112,9 +112,6 @@ type rawType struct {
 type yamlKindNode interface {
 	// Generate a string representation to include in a table of fields.
 	formatForTable() string
-	// Generate an example YAML value for the type with the provided number
-	// of indendations.
-	formatForExampleYAML(indents int) string
 	// Get the custom children of this yamlKindNode. Must call
 	// customFieldData on its own children before returning.
 	customFieldData() []PackageInfo
@@ -126,10 +123,6 @@ type yamlKindNode interface {
 type nonYAMLKind struct{}
 
 func (n nonYAMLKind) formatForTable() string {
-	return ""
-}
-
-func (n nonYAMLKind) formatForExampleYAML(indents int) string {
 	return ""
 }
 
@@ -146,26 +139,6 @@ func (y yamlSequence) formatForTable() string {
 	return `[]` + y.elementKind.formatForTable()
 }
 
-func (y yamlSequence) formatForExampleYAML(indents int) string {
-	var leading string
-	indents++
-	for i := 0; i < indents; i++ {
-		leading += "  "
-	}
-	el := y.elementKind.formatForExampleYAML(indents)
-	// Trim leading indentation since each element is already indented.
-	el = strings.TrimLeft(el, " ")
-	// Always start a sequence on a new line
-	return fmt.Sprintf(`
-%v- %v
-%v- %v
-%v- %v`,
-		leading, el,
-		leading, el,
-		leading, el,
-	)
-}
-
 func (y yamlSequence) customFieldData() []PackageInfo {
 	return y.elementKind.customFieldData()
 }
@@ -174,24 +147,6 @@ func (y yamlSequence) customFieldData() []PackageInfo {
 type yamlMapping struct {
 	keyKind   yamlKindNode
 	valueKind yamlKindNode
-}
-
-func (y yamlMapping) formatForExampleYAML(indents int) string {
-	var leading string
-	// Add an extra indent for mappings
-	indents = indents + 1
-	for i := 0; i < indents; i++ {
-		leading += "  "
-	}
-
-	val := y.valueKind.formatForExampleYAML(indents)
-	// Remove leading indentation on the first line of the value since the
-	// key/value pair is already indented. This does not affect subsequent
-	// lines of the value.
-	val = strings.TrimLeft(val, " ")
-
-	kv := fmt.Sprintf("%v%v: %v", leading, y.keyKind.formatForExampleYAML(0), val)
-	return fmt.Sprintf("\n%v\n%v\n%v", kv, kv, kv)
 }
 
 func (y yamlMapping) formatForTable() string {
@@ -210,10 +165,6 @@ func (y yamlString) formatForTable() string {
 	return "string"
 }
 
-func (y yamlString) formatForExampleYAML(indents int) string {
-	return `"string"`
-}
-
 func (y yamlString) customFieldData() []PackageInfo {
 	return []PackageInfo{}
 }
@@ -222,10 +173,6 @@ type yamlBase64 struct{}
 
 func (y yamlBase64) formatForTable() string {
 	return "base64-encoded string"
-}
-
-func (y yamlBase64) formatForExampleYAML(indents int) string {
-	return "BASE64_STRING"
 }
 
 func (y yamlBase64) customFieldData() []PackageInfo {
@@ -238,10 +185,6 @@ func (y yamlNumber) formatForTable() string {
 	return "number"
 }
 
-func (y yamlNumber) formatForExampleYAML(indents int) string {
-	return "1"
-}
-
 func (y yamlNumber) customFieldData() []PackageInfo {
 	return []PackageInfo{}
 }
@@ -250,10 +193,6 @@ type yamlBool struct{}
 
 func (y yamlBool) formatForTable() string {
 	return "Boolean"
-}
-
-func (y yamlBool) formatForExampleYAML(indents int) string {
-	return "true"
 }
 
 func (y yamlBool) customFieldData() []PackageInfo {
@@ -272,15 +211,6 @@ func (y yamlCustomType) customFieldData() []PackageInfo {
 	return []PackageInfo{
 		y.declarationInfo,
 	}
-}
-
-func (y yamlCustomType) formatForExampleYAML(indents int) string {
-	var leading string
-	for i := 0; i < indents; i++ {
-		leading += "  "
-	}
-
-	return leading + "# [...]"
 }
 
 func (y yamlCustomType) formatForTable() string {
