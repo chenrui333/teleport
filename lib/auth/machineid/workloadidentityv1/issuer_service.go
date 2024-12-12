@@ -218,7 +218,6 @@ func (s *IssuanceService) deriveAttrs(
 			BotName: authzCtx.Identity.GetIdentity().BotName,
 			Labels:  authzCtx.User.GetAllLabels(),
 		},
-		Join: &workloadidentityv1pb.JoinAttrs{},
 	}
 
 	return attrs, nil
@@ -525,6 +524,14 @@ func (s *IssuanceService) issueJWTSVID(
 	}
 
 	return signed, jti, nil
+}
+
+func (s *IssuanceService) IssueWorkloadIdentities(
+	ctx context.Context,
+	req *workloadidentityv1pb.IssueWorkloadIdentitiesRequest,
+) (*workloadidentityv1pb.IssueWorkloadIdentitiesResponse, error) {
+	// TODO(noah): Coming to a PR near you soon!
+	return nil, trace.NotImplemented("not implemented")
 }
 
 func serialString(serial *big.Int) string {

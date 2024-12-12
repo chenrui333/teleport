@@ -33,7 +33,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorkloadIdentityIssuanceService_IssueWorkloadIdentity_FullMethodName = "/teleport.workloadidentity.v1.WorkloadIdentityIssuanceService/IssueWorkloadIdentity"
+	WorkloadIdentityIssuanceService_IssueWorkloadIdentity_FullMethodName   = "/teleport.workloadidentity.v1.WorkloadIdentityIssuanceService/IssueWorkloadIdentity"
+	WorkloadIdentityIssuanceService_IssueWorkloadIdentities_FullMethodName = "/teleport.workloadidentity.v1.WorkloadIdentityIssuanceService/IssueWorkloadIdentities"
 )
 
 // WorkloadIdentityIssuanceServiceClient is the client API for WorkloadIdentityIssuanceService service.
@@ -47,6 +48,9 @@ type WorkloadIdentityIssuanceServiceClient interface {
 	// WorkloadIdentity resource. If it is unable to issue a credential,
 	// an error will be returned.
 	IssueWorkloadIdentity(ctx context.Context, in *IssueWorkloadIdentityRequest, opts ...grpc.CallOption) (*IssueWorkloadIdentityResponse, error)
+	// IssueWorkloadIdentities can issue multiple workload identity credentials
+	// based on label selectors for the WorkloadIdentity resources.
+	IssueWorkloadIdentities(ctx context.Context, in *IssueWorkloadIdentitiesRequest, opts ...grpc.CallOption) (*IssueWorkloadIdentitiesResponse, error)
 }
 
 type workloadIdentityIssuanceServiceClient struct {
@@ -67,6 +71,16 @@ func (c *workloadIdentityIssuanceServiceClient) IssueWorkloadIdentity(ctx contex
 	return out, nil
 }
 
+func (c *workloadIdentityIssuanceServiceClient) IssueWorkloadIdentities(ctx context.Context, in *IssueWorkloadIdentitiesRequest, opts ...grpc.CallOption) (*IssueWorkloadIdentitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueWorkloadIdentitiesResponse)
+	err := c.cc.Invoke(ctx, WorkloadIdentityIssuanceService_IssueWorkloadIdentities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkloadIdentityIssuanceServiceServer is the server API for WorkloadIdentityIssuanceService service.
 // All implementations must embed UnimplementedWorkloadIdentityIssuanceServiceServer
 // for forward compatibility.
@@ -78,6 +92,9 @@ type WorkloadIdentityIssuanceServiceServer interface {
 	// WorkloadIdentity resource. If it is unable to issue a credential,
 	// an error will be returned.
 	IssueWorkloadIdentity(context.Context, *IssueWorkloadIdentityRequest) (*IssueWorkloadIdentityResponse, error)
+	// IssueWorkloadIdentities can issue multiple workload identity credentials
+	// based on label selectors for the WorkloadIdentity resources.
+	IssueWorkloadIdentities(context.Context, *IssueWorkloadIdentitiesRequest) (*IssueWorkloadIdentitiesResponse, error)
 	mustEmbedUnimplementedWorkloadIdentityIssuanceServiceServer()
 }
 
@@ -90,6 +107,9 @@ type UnimplementedWorkloadIdentityIssuanceServiceServer struct{}
 
 func (UnimplementedWorkloadIdentityIssuanceServiceServer) IssueWorkloadIdentity(context.Context, *IssueWorkloadIdentityRequest) (*IssueWorkloadIdentityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IssueWorkloadIdentity not implemented")
+}
+func (UnimplementedWorkloadIdentityIssuanceServiceServer) IssueWorkloadIdentities(context.Context, *IssueWorkloadIdentitiesRequest) (*IssueWorkloadIdentitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IssueWorkloadIdentities not implemented")
 }
 func (UnimplementedWorkloadIdentityIssuanceServiceServer) mustEmbedUnimplementedWorkloadIdentityIssuanceServiceServer() {
 }
@@ -131,6 +151,24 @@ func _WorkloadIdentityIssuanceService_IssueWorkloadIdentity_Handler(srv interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkloadIdentityIssuanceService_IssueWorkloadIdentities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueWorkloadIdentitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkloadIdentityIssuanceServiceServer).IssueWorkloadIdentities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkloadIdentityIssuanceService_IssueWorkloadIdentities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkloadIdentityIssuanceServiceServer).IssueWorkloadIdentities(ctx, req.(*IssueWorkloadIdentitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkloadIdentityIssuanceService_ServiceDesc is the grpc.ServiceDesc for WorkloadIdentityIssuanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -141,6 +179,10 @@ var WorkloadIdentityIssuanceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IssueWorkloadIdentity",
 			Handler:    _WorkloadIdentityIssuanceService_IssueWorkloadIdentity_Handler,
+		},
+		{
+			MethodName: "IssueWorkloadIdentities",
+			Handler:    _WorkloadIdentityIssuanceService_IssueWorkloadIdentities_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

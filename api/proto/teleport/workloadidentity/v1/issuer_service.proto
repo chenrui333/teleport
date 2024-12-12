@@ -29,6 +29,9 @@ service WorkloadIdentityIssuanceService {
   // WorkloadIdentity resource. If it is unable to issue a credential,
   // an error will be returned.
   rpc IssueWorkloadIdentity(IssueWorkloadIdentityRequest) returns (IssueWorkloadIdentityResponse);
+  // IssueWorkloadIdentities can issue multiple workload identity credentials
+  // based on label selectors for the WorkloadIdentity resources.
+  rpc IssueWorkloadIdentities(IssueWorkloadIdentitiesRequest) returns (IssueWorkloadIdentitiesResponse);
 }
 
 // The parameters for issuing an X509 SVID.
@@ -93,4 +96,40 @@ message IssueWorkloadIdentityRequest {
 message IssueWorkloadIdentityResponse {
   // The issued credential.
   Credential credential = 1;
+}
+
+// A key-values pair for selecting WorkloadIdentity resources based on their
+// labels.
+message LabelSelector {
+  // The key to match.
+  // If this is wildcard, then a single value of wildcard must also be provided.
+  string key = 1;
+  // Any of the acceptable matching values.
+  repeated string values = 2;
+}
+
+// The request for the IssueWorkloadIdentities RPC.
+message IssueWorkloadIdentitiesRequest {
+  // The label selectors to use for selecting WorkloadIdentity resources.
+  // At least one selector must be provided.
+  repeated LabelSelector label_selectors = 1;
+  // The parameters for issuing the credentials, varying by credential type.
+  oneof credential {
+    // The parameters for issuing an X509 SVID.
+    X509SVIDParams x509_svid_params = 2;
+    // The parameters for issuing a JWT SVID.
+    JWTSVIDParams jwt_svid_params = 3;
+  }
+  // The workload attributes to encode into the credentials.
+  WorkloadAttrs workload_attrs = 4;
+  // The TTL that the client is requesting for the resulting credentials.
+  // This may be adjusted by the server and therefore the client MUST check the
+  // returned TTL rather than assuming that the requested TTL was granted.
+  google.protobuf.Duration requested_ttl = 5;
+}
+
+// The response for the IssueWorkloadIdentities RPC.
+message IssueWorkloadIdentitiesResponse {
+  // The issued credentials.
+  repeated Credential credentials = 1;
 }
