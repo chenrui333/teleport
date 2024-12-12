@@ -893,7 +893,7 @@ type Resource struct {
 					SourcePath:  "myfile.go",
 					Fields: []Field{
 						{
-							Name:        "name",
+							Name:        "Name",
 							Description: "The name of the resource",
 							Type:        "string",
 						},
