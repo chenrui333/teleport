@@ -61,19 +61,6 @@ type Field struct {
 	Type        string
 }
 
-// yamlKind is the type of a field as represented in YAML. Used for determining
-// how to document a field in the resource reference.
-type yamlKind int
-
-const (
-	unknownKind yamlKind = iota
-	sequenceKind
-	mappingKind
-	stringKind
-	numberKind
-	boolKind
-)
-
 // rawField contains simplified information about a struct field type. This
 // prevents passing around AST nodes and makes testing easier.
 type rawField struct {
