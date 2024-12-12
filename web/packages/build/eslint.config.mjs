@@ -80,17 +80,23 @@ export default tseslint.config(
           'newlines-between': 'always-and-inside-groups',
         },
       ],
-
+      // typescript-eslint recommends to turn import/no-unresolved off.
+      // https://typescript-eslint.io/troubleshooting/typed-linting/performance/#eslint-plugin-import
+      'import/no-unresolved': 'off',
+      'no-unused-vars': 'off', // disabled to allow the typescript one to take over and avoid errors in reporting
       '@typescript-eslint/no-unused-vars': ['error'],
+      'no-unused-expressions': 'off',
       '@typescript-eslint/no-unused-expressions': [
         'error',
         { allowShortCircuit: true, allowTernary: true, enforceForJSX: true },
       ],
       '@typescript-eslint/no-empty-object-type': [
         'error',
+        // with-single-extends is needed to allow for interface extends like we have in jest.d.ts.
         { allowInterfaces: 'with-single-extends' },
       ],
 
+      // <TODO> Enable these rules after fixing all existing issues
       '@typescript-eslint/no-use-before-define': 'off',
       '@typescript-eslint/indent': 'off',
       '@typescript/no-use-before-define': 'off',
@@ -104,31 +110,11 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-this-alias': 'off',
 
-      'react/jsx-no-undef': 'error',
-      'react/jsx-pascal-case': 'error',
-      'react/no-danger': 'error',
-      'react/display-name': 'off',
-      'react/jsx-no-duplicate-props': 'error',
-      'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
-      'react-hooks/rules-of-hooks': 'warn',
-      'react-hooks/exhaustive-deps': 'warn',
-      'react/jsx-sort-prop-types': 'off',
-      'react/jsx-sort-props': 'off',
-      'react/jsx-uses-vars': 'warn',
-      'react/no-did-mount-set-state': 'warn',
-      'react/react-in-jsx-scope': 'off',
-      'react/no-did-update-set-state': 'warn',
-      'react/no-unknown-property': 'warn',
-      'react/prop-types': 'off',
-      'react/self-closing-comp': 'off',
-      'react/sort-comp': 'off',
-      'react/jsx-wrap-multilines': 'warn',
-
+      // </TODO>
       'comma-dangle': 'off',
       'no-mixed-spaces-and-tabs': 'off',
       'no-alert': 'off',
       'import/no-named-as-default': 'off',
-      'import/no-unresolved': 'off',
       'import/default': 'error',
       'no-underscore-dangle': 'off',
       'no-case-declarations': 'off',
@@ -136,8 +122,35 @@ export default tseslint.config(
       'no-var': 'off',
       'prefer-rest-params': 'off',
       'prefer-spread': 'off',
+
+      strict: 'off',
       'no-console': 'warn',
       'no-trailing-spaces': 'error',
+      'react/display-name': 'off',
+      'react/jsx-no-undef': 'error',
+      'react/jsx-pascal-case': 'error',
+      'react/no-danger': 'error',
+      'react/jsx-no-duplicate-props': 'error',
+      'react/jsx-sort-prop-types': 'off',
+      'react/jsx-sort-props': 'off',
+      'react/jsx-uses-vars': 'warn',
+      'react/no-did-mount-set-state': 'warn',
+      'react/no-did-update-set-state': 'warn',
+      'react/no-unknown-property': 'warn',
+      'react/prop-types': 'off',
+      'react/self-closing-comp': 'off',
+      'react/sort-comp': 'off',
+      'react/jsx-wrap-multilines': 'warn',
+      // allowExpressions allow single expressions in a fragment eg: <>{children}</>
+      // https://github.com/jsx-eslint/eslint-plugin-react/blob/f83b38869c7fc2c6a84ef8c2639ac190b8fef74f/docs/rules/jsx-no-useless-fragment.md#allowexpressions
+      'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
+
+      'react-hooks/rules-of-hooks': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+
+      // Turned off because we use automatic runtime.
+      'react/jsx-uses-react': 'off',
+      'react/react-in-jsx-scope': 'off',
     },
   },
   {
@@ -166,6 +179,8 @@ export default tseslint.config(
     },
   },
   {
+    // Allow require imports in .js files, as migrating our project to ESM modules requires a lot of
+    // changes.
     files: ['**/*.js'],
     rules: {
       '@typescript-eslint/no-require-imports': 'warn',
