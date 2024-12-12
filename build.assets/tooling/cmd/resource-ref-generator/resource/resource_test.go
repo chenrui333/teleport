@@ -169,7 +169,7 @@ type Metadata struct {
 				},
 			}},
 		{
-			description: "a custom type field with no override",
+			description: "a custom type field",
 			source: `
 package mypkg
 
@@ -401,6 +401,7 @@ package mypkg
 // Server includes information about a server registered with Teleport.
 type Server struct {
   Name string
+  // Impl is the implementation of the server.
   Impl ServerImplementation
 }
 `,
@@ -828,56 +829,6 @@ type ServerSpecV1 struct {
 			},
 		},
 		{
-			description: "struct field with an override for an existing field type definition",
-			source: `
-package mypkg
-
-// Server includes information about a server registered with Teleport.
-type Server struct {
-    // Name is the name of the server.
-    Name string BACKTICKjson:"name"BACKTICK
-    // LabelMaps includes a map of strings to labels.
-    LabelMaps []map[string]mypkg.Label BACKTICKjson:"label_maps"BACKTICK
-}
-`,
-			declSources: []string{`package types
-// ServerSpecV1 includes aspects of a proxied server.
-type ServerSpecV1 struct {
-    // The address of the server.
-    Address string BACKTICKjson:"address"BACKTICK
-}`,
-				`package mypkg
-
-// Label is some more information you can add to a resource.
-type Label struct {
-  name string
-  number int
-}
-`,
-			},
-			expected: map[PackageInfo]ReferenceEntry{
-				PackageInfo{
-					DeclName:    "Server",
-					PackageName: "mypkg",
-				}: {
-					SectionName: "Server",
-					Description: "Includes information about a server registered with Teleport.",
-					SourcePath:  "myfile.go",
-					Fields: []Field{
-						Field{
-							Name:        "name",
-							Description: "The name of the server.",
-							Type:        "string"},
-						Field{
-							Name:        "label_maps",
-							Description: "Includes a map of strings to labels.",
-							Type:        "See example YAML.",
-						},
-					},
-				},
-			},
-		},
-		{
 			description: "type parameter",
 			source: `package mypkg
 // Resource is a resource.
@@ -924,11 +875,11 @@ func (stream *streamFunc[T]) Next() bool {
 			description: "field type not declared in a loaded package",
 			source: `package mypkg
 
-// Resource is a resource.
+// Resource is a resource
 type Resource struct {
-  // The name of the resource.
+  // The name of the resource
   Name string
-  // How much time must elapse before the resource expires.
+  // How much time must elapse before the resource expires
   Expiry time.Duration
 }
 `,
@@ -957,7 +908,7 @@ type Resource struct {
 			declSources: []string{},
 		},
 		{
-			description: "field type not declared in a loaded package with override",
+			description: "field type not declared in a loaded package",
 			source: `package mypkg
 
 // Resource is a resource.
