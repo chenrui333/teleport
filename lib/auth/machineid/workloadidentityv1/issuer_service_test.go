@@ -38,10 +38,10 @@ func Test_getFieldStringValue(t *testing.T) {
 			name: "success",
 			in: &workloadidentityv1pb.Attrs{
 				User: &workloadidentityv1pb.UserAttrs{
-					Username: "jeff",
+					Name: "jeff",
 				},
 			},
-			attr:       "user.username",
+			attr:       "user.name",
 			want:       "jeff",
 			requireErr: require.NoError,
 		},
@@ -49,7 +49,7 @@ func Test_getFieldStringValue(t *testing.T) {
 			name: "non-string final field",
 			in: &workloadidentityv1pb.Attrs{
 				User: &workloadidentityv1pb.UserAttrs{
-					Username: "user",
+					Name: "user",
 				},
 			},
 			attr: "user",
@@ -61,7 +61,7 @@ func Test_getFieldStringValue(t *testing.T) {
 			// We mostly just want this to not panic.
 			name:       "nil root",
 			in:         nil,
-			attr:       "user.username",
+			attr:       "user.name",
 			want:       "",
 			requireErr: require.NoError,
 		},
@@ -71,7 +71,7 @@ func Test_getFieldStringValue(t *testing.T) {
 			in: &workloadidentityv1pb.Attrs{
 				User: nil,
 			},
-			attr:       "user.username",
+			attr:       "user.name",
 			want:       "",
 			requireErr: require.NoError,
 		},
@@ -95,11 +95,11 @@ func Test_templateString(t *testing.T) {
 	}{
 		{
 			name: "success mixed",
-			in:   "hello{{user.username}}.{{user.username}} {{ workload.kubernetes.pod_name }}//{{ workload.kubernetes.namespace}}",
+			in:   "hello{{user.name}}.{{user.name}} {{ workload.kubernetes.pod_name }}//{{ workload.kubernetes.namespace}}",
 			want: "hellojeff.jeff pod1//default",
 			attrs: &workloadidentityv1pb.Attrs{
 				User: &workloadidentityv1pb.UserAttrs{
-					Username: "jeff",
+					Name: "jeff",
 				},
 				Workload: &workloadidentityv1pb.WorkloadAttrs{
 					Kubernetes: &workloadidentityv1pb.WorkloadAttrsKubernetes{
@@ -112,22 +112,11 @@ func Test_templateString(t *testing.T) {
 		},
 		{
 			name: "success with spaces",
-			in:   "hello {{user.username}}",
+			in:   "hello {{user.name}}",
 			want: "hello jeff",
 			attrs: &workloadidentityv1pb.Attrs{
 				User: &workloadidentityv1pb.UserAttrs{
-					Username: "jeff",
-				},
-			},
-			requireErr: require.NoError,
-		},
-		{
-			name: "success with spaces",
-			in:   "hello {{user.username}}",
-			want: "hello jeff",
-			attrs: &workloadidentityv1pb.Attrs{
-				User: &workloadidentityv1pb.UserAttrs{
-					Username: "jeff",
+					Name: "jeff",
 				},
 			},
 			requireErr: require.NoError,
@@ -137,7 +126,7 @@ func Test_templateString(t *testing.T) {
 			in:   "hello {{workload.kubernetes.pod_name}}",
 			attrs: &workloadidentityv1pb.Attrs{
 				User: &workloadidentityv1pb.UserAttrs{
-					Username: "jeff",
+					Name: "jeff",
 				},
 			},
 			requireErr: func(t require.TestingT, err error, i ...interface{}) {
@@ -157,7 +146,7 @@ func Test_templateString(t *testing.T) {
 func Test_evaluateRules(t *testing.T) {
 	attrs := &workloadidentityv1pb.Attrs{
 		User: &workloadidentityv1pb.UserAttrs{
-			Username: "foo",
+			Name: "foo",
 		},
 	}
 	wi := &workloadidentityv1pb.WorkloadIdentity{
@@ -172,7 +161,7 @@ func Test_evaluateRules(t *testing.T) {
 					{
 						Conditions: []*workloadidentityv1pb.WorkloadIdentityCondition{
 							{
-								Attribute: "user.username",
+								Attribute: "user.name",
 								Equals:    "foo",
 							},
 						},

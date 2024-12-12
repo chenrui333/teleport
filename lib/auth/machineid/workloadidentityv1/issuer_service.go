@@ -240,9 +240,16 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 		return nil, trace.BadParameter("at least one credential type must be requested")
 	}
 
-	// TODO: Enforce WorkloadIdentity labelling access control?
 	wi, err := s.cache.GetWorkloadIdentity(ctx, req.GetName())
 	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	// Check the principal has access to the workload identity resource by
+	// virtue of WorkloadIdentityLabels on a role.
+	if err := authCtx.Checker.CheckAccess(
+		types.Resource153ToResourceWithLabels(wi),
+		services.AccessState{},
+	); err != nil {
 		return nil, trace.Wrap(err)
 	}
 
