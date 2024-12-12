@@ -22,13 +22,16 @@ import "teleport/workloadidentity/v1/attrs.proto";
 
 option go_package = "github.com/gravitational/teleport/api/gen/proto/go/teleport/workloadidentity/v1;workloadidentityv1pb";
 
-// TODO: Comment
+// WorkloadIdentityIssuanceService is the service that issues workload identity
+// credentials.
 service WorkloadIdentityIssuanceService {
-  // TODO: Comment
+  // IssueWorkloadIdentity issues a workload identity credential for the named
+  // WorkloadIdentity resource. If it is unable to issue a credential,
+  // an error will be returned.
   rpc IssueWorkloadIdentity(IssueWorkloadIdentityRequest) returns (IssueWorkloadIdentityResponse);
 }
 
-// TODO: Comment
+// The parameters for issuing an X509 SVID.
 message X509SVIDParams {
   // The PKIX, ASN.1 DER public key to encode into the X509 SVID.
   bytes public_key = 1;
@@ -38,7 +41,7 @@ message X509SVIDParams {
   google.protobuf.Duration ttl = 2;
 }
 
-// TODO: Comment
+// The parameters for issuing a JWT SVID.
 message JWTSVIDParams {
   // The audiences to encode into the JWT SVID as the `aud` claim.
   repeated string audiences = 1;
@@ -48,7 +51,8 @@ message JWTSVIDParams {
   google.protobuf.Duration ttl = 2;
 }
 
-// TODO: Comment
+// A credential, and its metadata, that has been issued by Teleport Workload
+// Identity.
 message Credential {
   // The TTL that was chosen by the server.
   google.protobuf.Duration ttl = 1;
@@ -74,18 +78,23 @@ message Credential {
   }
 }
 
-// TODO: Comment
+// The request for the IssueWorkloadIdentity RPC.
 message IssueWorkloadIdentityRequest {
-  // The name of the workload identity to issue.
+  // The name of the WorkloadIdentity resource to use for issuing the credential.
   string name = 1;
+  // The parameters for issuing the credential, varying by credential type.
   oneof credential {
+    // The parameters for issuing an X509 SVID.
     X509SVIDParams x509_svid_params = 2;
+    // The parameters for issuing a JWT SVID.
     JWTSVIDParams jwt_svid_params = 3;
   }
+  // The workload attributes to encode into the credential.
   WorkloadAttrs workload_attrs = 4;
 }
 
-// TODO: Comment
+// The response for the IssueWorkloadIdentity RPC.
 message IssueWorkloadIdentityResponse {
+  // The issued credential.
   Credential credential = 1;
 }

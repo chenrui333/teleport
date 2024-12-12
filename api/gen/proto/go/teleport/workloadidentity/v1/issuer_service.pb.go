@@ -36,7 +36,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// TODO: Comment
+// The parameters for issuing an X509 SVID.
 type X509SVIDParams struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -94,7 +94,7 @@ func (x *X509SVIDParams) GetTtl() *durationpb.Duration {
 	return nil
 }
 
-// TODO: Comment
+// The parameters for issuing a JWT SVID.
 type JWTSVIDParams struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -152,7 +152,8 @@ func (x *JWTSVIDParams) GetTtl() *durationpb.Duration {
 	return nil
 }
 
-// TODO: Comment
+// A credential, and its metadata, that has been issued by Teleport Workload
+// Identity.
 type Credential struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -291,20 +292,23 @@ func (*Credential_X509Svid) isCredential_Credential() {}
 
 func (*Credential_JwtSvid) isCredential_Credential() {}
 
-// TODO: Comment
+// The request for the IssueWorkloadIdentity RPC.
 type IssueWorkloadIdentityRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The name of the workload identity to issue.
+	// The name of the WorkloadIdentity resource to use for issuing the credential.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The parameters for issuing the credential, varying by credential type.
+	//
 	// Types that are assignable to Credential:
 	//
 	//	*IssueWorkloadIdentityRequest_X509SvidParams
 	//	*IssueWorkloadIdentityRequest_JwtSvidParams
-	Credential    isIssueWorkloadIdentityRequest_Credential `protobuf_oneof:"credential"`
-	WorkloadAttrs *WorkloadAttrs                            `protobuf:"bytes,4,opt,name=workload_attrs,json=workloadAttrs,proto3" json:"workload_attrs,omitempty"`
+	Credential isIssueWorkloadIdentityRequest_Credential `protobuf_oneof:"credential"`
+	// The workload attributes to encode into the credential.
+	WorkloadAttrs *WorkloadAttrs `protobuf:"bytes,4,opt,name=workload_attrs,json=workloadAttrs,proto3" json:"workload_attrs,omitempty"`
 }
 
 func (x *IssueWorkloadIdentityRequest) Reset() {
@@ -377,10 +381,12 @@ type isIssueWorkloadIdentityRequest_Credential interface {
 }
 
 type IssueWorkloadIdentityRequest_X509SvidParams struct {
+	// The parameters for issuing an X509 SVID.
 	X509SvidParams *X509SVIDParams `protobuf:"bytes,2,opt,name=x509_svid_params,json=x509SvidParams,proto3,oneof"`
 }
 
 type IssueWorkloadIdentityRequest_JwtSvidParams struct {
+	// The parameters for issuing a JWT SVID.
 	JwtSvidParams *JWTSVIDParams `protobuf:"bytes,3,opt,name=jwt_svid_params,json=jwtSvidParams,proto3,oneof"`
 }
 
@@ -388,12 +394,13 @@ func (*IssueWorkloadIdentityRequest_X509SvidParams) isIssueWorkloadIdentityReque
 
 func (*IssueWorkloadIdentityRequest_JwtSvidParams) isIssueWorkloadIdentityRequest_Credential() {}
 
-// TODO: Comment
+// The response for the IssueWorkloadIdentity RPC.
 type IssueWorkloadIdentityResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The issued credential.
 	Credential *Credential `protobuf:"bytes,1,opt,name=credential,proto3" json:"credential,omitempty"`
 }
 

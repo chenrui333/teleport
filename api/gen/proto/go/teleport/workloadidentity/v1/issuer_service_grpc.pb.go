@@ -40,9 +40,12 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// TODO: Comment
+// WorkloadIdentityIssuanceService is the service that issues workload identity
+// credentials.
 type WorkloadIdentityIssuanceServiceClient interface {
-	// TODO: Comment
+	// IssueWorkloadIdentity issues a workload identity credential for the named
+	// WorkloadIdentity resource. If it is unable to issue a credential,
+	// an error will be returned.
 	IssueWorkloadIdentity(ctx context.Context, in *IssueWorkloadIdentityRequest, opts ...grpc.CallOption) (*IssueWorkloadIdentityResponse, error)
 }
 
@@ -68,9 +71,12 @@ func (c *workloadIdentityIssuanceServiceClient) IssueWorkloadIdentity(ctx contex
 // All implementations must embed UnimplementedWorkloadIdentityIssuanceServiceServer
 // for forward compatibility.
 //
-// TODO: Comment
+// WorkloadIdentityIssuanceService is the service that issues workload identity
+// credentials.
 type WorkloadIdentityIssuanceServiceServer interface {
-	// TODO: Comment
+	// IssueWorkloadIdentity issues a workload identity credential for the named
+	// WorkloadIdentity resource. If it is unable to issue a credential,
+	// an error will be returned.
 	IssueWorkloadIdentity(context.Context, *IssueWorkloadIdentityRequest) (*IssueWorkloadIdentityResponse, error)
 	mustEmbedUnimplementedWorkloadIdentityIssuanceServiceServer()
 }
