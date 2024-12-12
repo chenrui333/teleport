@@ -686,6 +686,9 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 		return nil, err
 	}
 
+	// TODO: We can probably refactor fieldsToProcess together with
+	// handleEmbeddedStructFields to decouple the logic of representing
+	// declarations from formatting table information.
 	fieldsToProcess, err := handleEmbeddedStructFields(decl, rs.fields, allDecls)
 	if err != nil {
 		return nil, err
