@@ -256,7 +256,6 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 	}
 
 	// Perform any templating
-
 	spiffeIDPath, err := templateString(wi.GetSpec().GetSpiffe().GetId(), attrs)
 	if err != nil {
 		return nil, trace.Wrap(err, "templating spec.spiffe.id")
@@ -269,7 +268,11 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 	if err != nil {
 		return nil, trace.Wrap(err, "creating SPIFFE ID")
 	}
-	s.logger.WarnContext(ctx, "spiffeID", "id", spiffeID.String())
+
+	hint, err := templateString(wi.GetSpec().GetSpiffe().GetHint(), attrs)
+	if err != nil {
+		return nil, trace.Wrap(err, "templating spec.spiffe.hint")
+	}
 
 	// TODO: Actually like calculate the TTL.
 	ttl := time.Hour
@@ -285,14 +288,14 @@ func (s *IssuanceService) IssueWorkloadIdentity(
 		UserMetadata:       authz.ClientUserMetadata(ctx),
 		ConnectionMetadata: authz.ConnectionMetadata(ctx),
 		SPIFFEID:           spiffeID.String(),
-		Hint:               wi.GetSpec().GetSpiffe().GetHint(),
+		Hint:               hint,
 	}
 	cred := &workloadidentityv1pb.Credential{
 		WorkloadIdentityName:     wi.GetMetadata().GetName(),
 		WorkloadIdentityRevision: wi.GetMetadata().GetRevision(),
 
 		SpiffeId: spiffeID.String(),
-		Hint:     wi.GetSpec().GetSpiffe().GetHint(),
+		Hint:     hint,
 
 		Expiry: timestamppb.New(notAfter),
 		Ttl:    durationpb.New(ttl),
