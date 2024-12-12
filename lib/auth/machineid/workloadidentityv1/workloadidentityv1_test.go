@@ -982,3 +982,58 @@ func TestResourceService_UpsertWorkloadIdentity(t *testing.T) {
 		})
 	}
 }
+
+func TestIssueWorkloadIdentity(t *testing.T) {
+	t.Parallel()
+	srv, _ := newTestTLSServer(t)
+	ctx := context.Background()
+
+	authorizedUser, _, err := auth.CreateUserAndRole(
+		srv.Auth(),
+		"authorized",
+		[]string{},
+		[]types.Rule{
+			{
+				Resources: []string{types.KindWorkloadIdentity},
+				Verbs:     []string{types.VerbCreate, types.VerbUpdate},
+			},
+		},
+		auth.WithRoleMutator(func(role types.Role) {
+
+		}),
+	)
+	require.NoError(t, err)
+	authorizedClient, err := srv.NewClient(auth.TestUser(authorizedUser.GetName()))
+	require.NoError(t, err)
+
+	// Create some WorkloadIdentity resources
+	full, err := srv.Auth().CreateWorkloadIdentity(ctx, &workloadidentityv1pb.WorkloadIdentity{
+		Kind:    types.KindWorkloadIdentity,
+		Version: types.V1,
+		Metadata: &headerv1.Metadata{
+			Name: "full",
+		},
+		Spec: &workloadidentityv1pb.WorkloadIdentitySpec{
+			Spiffe: &workloadidentityv1pb.WorkloadIdentitySPIFFE{
+				Id: "/example/{{ user.name }}",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	c := workloadidentityv1pb.NewWorkloadIdentityIssuanceServiceClient(
+		authorizedClient.GetConnection(),
+	)
+
+	res, err := c.IssueWorkloadIdentity(ctx, &workloadidentityv1pb.IssueWorkloadIdentityRequest{
+		Name: full.GetMetadata().GetName(),
+		Credential: &workloadidentityv1pb.IssueWorkloadIdentityRequest_JwtSvidParams{
+			JwtSvidParams: &workloadidentityv1pb.JWTSVIDParams{
+				Audiences: []string{"example.com"},
+			},
+		},
+	})
+	require.NoError(t, err)
+	t.Logf("res: %+v", res)
+
+}
