@@ -308,7 +308,7 @@ func (a *Application) UnmarshalYAML(value *yaml.Node) error {
 			errorSubstring: "Example YAML:",
 		},
 		{
-			description: "a custom type field with no override and a second source file",
+			description: "a custom type field declared in a second source file",
 			source: `
 package mypkg
 
