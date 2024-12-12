@@ -83,9 +83,6 @@ export default tseslint.config(
       // typescript-eslint recommends to turn import/no-unresolved off.
       // https://typescript-eslint.io/troubleshooting/typed-linting/performance/#eslint-plugin-import
       'import/no-unresolved': 'off',
-      'no-unused-vars': 'off', // disabled to allow the typescript one to take over and avoid errors in reporting
-      '@typescript-eslint/no-unused-vars': ['error'],
-      'no-unused-expressions': 'off',
       '@typescript-eslint/no-unused-expressions': [
         'error',
         { allowShortCircuit: true, allowTernary: true, enforceForJSX: true },
@@ -96,18 +93,8 @@ export default tseslint.config(
         { allowInterfaces: 'with-single-extends' },
       ],
 
-      // <TODO> Enable these rules after fixing all existing issues
-      '@typescript-eslint/no-use-before-define': 'off',
-      '@typescript-eslint/indent': 'off',
-      '@typescript/no-use-before-define': 'off',
-      '@typescript-eslint/no-var-requires': 'off',
-      '@typescript-eslint/camelcase': 'off',
-      '@typescript-eslint/class-name-casing': 'off',
+      // <TODO> Enable these recommended typescript-eslint rules after fixing existing issues.
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/explicit-member-accessibility': 'off',
-      '@typescript-eslint/prefer-interface': 'off',
-      '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-this-alias': 'off',
 
       // </TODO>
