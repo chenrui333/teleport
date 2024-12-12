@@ -105,7 +105,6 @@ export default tseslint.config(
 
       'no-console': 'warn',
       'no-trailing-spaces': 'error',
-      'react/display-name': 'off',
       'react/jsx-no-undef': 'error',
       'react/jsx-pascal-case': 'error',
       'react/no-danger': 'error',
@@ -117,8 +116,6 @@ export default tseslint.config(
       'react/no-did-update-set-state': 'warn',
       'react/no-unknown-property': 'warn',
       'react/prop-types': 'off',
-      'react/self-closing-comp': 'off',
-      'react/sort-comp': 'off',
       'react/jsx-wrap-multilines': 'warn',
       // allowExpressions allow single expressions in a fragment eg: <>{children}</>
       // https://github.com/jsx-eslint/eslint-plugin-react/blob/f83b38869c7fc2c6a84ef8c2639ac190b8fef74f/docs/rules/jsx-no-useless-fragment.md#allowexpressions
@@ -126,10 +123,6 @@ export default tseslint.config(
 
       'react-hooks/rules-of-hooks': 'warn',
       'react-hooks/exhaustive-deps': 'warn',
-
-      // Turned off because we use automatic runtime.
-      'react/jsx-uses-react': 'off',
-      'react/react-in-jsx-scope': 'off',
     },
   },
   {
