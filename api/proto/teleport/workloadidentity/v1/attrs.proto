@@ -71,8 +71,13 @@ message UserAttrs {
   map<string, string> labels = 5;
 }
 
-// TODO: Comment
+// The attributes of a principal requesting a workload identity. These
+// attributes can be leveraged in rules, expressions and templating within the
+// WorkloadIdentity resource.
 message Attrs {
+  // Attributes sourced by workload attestation performed by `tbot`.
   WorkloadAttrs workload = 1;
+  // Attributes sourced from the user/bot making the request for a workload
+  // identity credential.
   UserAttrs user = 2;
 }

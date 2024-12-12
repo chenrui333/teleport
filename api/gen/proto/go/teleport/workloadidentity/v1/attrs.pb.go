@@ -342,14 +342,19 @@ func (x *UserAttrs) GetLabels() map[string]string {
 	return nil
 }
 
-// TODO: Comment
+// The attributes of a principal requesting a workload identity. These
+// attributes can be leveraged in rules, expressions and templating within the
+// WorkloadIdentity resource.
 type Attrs struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Attributes sourced by workload attestation performed by `tbot`.
 	Workload *WorkloadAttrs `protobuf:"bytes,1,opt,name=workload,proto3" json:"workload,omitempty"`
-	User     *UserAttrs     `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	// Attributes sourced from the user/bot making the request for a workload
+	// identity credential.
+	User *UserAttrs `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 }
 
 func (x *Attrs) Reset() {
