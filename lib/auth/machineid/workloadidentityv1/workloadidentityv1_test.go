@@ -988,6 +988,15 @@ func TestIssueWorkloadIdentity(t *testing.T) {
 	srv, _ := newTestTLSServer(t)
 	ctx := context.Background()
 
+	// Upsert a fake proxy to ensure we have a public address to use for the
+	// issuer.
+	proxy, err := types.NewServer("proxy", types.KindProxy, types.ServerSpecV2{
+		PublicAddrs: []string{"teleport.example.com"},
+	})
+	require.NoError(t, err)
+	err = srv.Auth().UpsertProxy(ctx, proxy)
+	require.NoError(t, err)
+
 	authorizedUser, _, err := auth.CreateUserAndRole(
 		srv.Auth(),
 		"authorized",
@@ -999,7 +1008,9 @@ func TestIssueWorkloadIdentity(t *testing.T) {
 			},
 		},
 		auth.WithRoleMutator(func(role types.Role) {
-
+			role.SetWorkloadIdentityLabels(types.Allow, types.Labels{
+				types.Wildcard: []string{types.Wildcard},
+			})
 		}),
 	)
 	require.NoError(t, err)
@@ -1014,6 +1025,18 @@ func TestIssueWorkloadIdentity(t *testing.T) {
 			Name: "full",
 		},
 		Spec: &workloadidentityv1pb.WorkloadIdentitySpec{
+			Rules: &workloadidentityv1pb.WorkloadIdentityRules{
+				Allow: []*workloadidentityv1pb.WorkloadIdentityRule{
+					{
+						Conditions: []*workloadidentityv1pb.WorkloadIdentityCondition{
+							{
+								Attribute: "user.name",
+								Equals:    "authorized",
+							},
+						},
+					},
+				},
+			},
 			Spiffe: &workloadidentityv1pb.WorkloadIdentitySPIFFE{
 				Id: "/example/{{ user.name }}",
 			},
