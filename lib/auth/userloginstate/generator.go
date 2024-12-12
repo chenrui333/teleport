@@ -207,80 +207,96 @@ func (g *Generator) addAccessListsToState(ctx context.Context, user types.User, 
 	allInheritedTraits := make(map[string][]string)
 
 	for _, accessList := range accessLists {
-		// Helper function to validate that the roles in the access list exist, and emit an audit event if needed.
-		validateRoles := func(roles []string) (bool, error) {
-			for _, role := range roles {
-				_, err := g.access.GetRole(ctx, role)
-				if err != nil {
-					if trace.IsNotFound(err) {
-						if err := g.emitter.EmitAuditEvent(ctx, &apievents.AccessListSkipped{
-							Metadata: apievents.Metadata{
-								Type: events.AccessListSkippedEvent,
-								Code: events.AccessListSkippedCode,
-							},
-							AccessListSkippedMetadata: apievents.AccessListSkippedMetadata{
-								AccessListName: accessList.Spec.Title,
-								User:           user.GetName(),
-								MissingRole:    role,
-							},
-							Status: apievents.Status{
-								Success:     false,
-								Error:       trace.Unwrap(err).Error(),
-								UserMessage: "access list skipped because it references non-existent role",
-							},
-						}); err != nil {
-							g.log.WithError(err).Warn("Failed to emit access list skipped warning audit event.")
-						}
-						return false, nil
-					}
-					return false, trace.Wrap(err)
-				}
-			}
-			return true, nil
-		}
-
 		// Grants are inherited if the user is a member of the access list, explicitly or via inheritance.
-		membershipKind, err := accesslists.IsAccessListMember(ctx, user, accessList, g.accessLists, g.accessLists, g.clock)
+		inheritedRoles, inheritedTraits, err := g.handleAccessListMembership(ctx, user, accessList, state)
 		if err != nil {
-			g.log.WithError(err).Warn("checking access list membership")
+			return nil, nil, trace.Wrap(err)
 		}
-		if err == nil && membershipKind != accesslists.MembershipOrOwnershipTypeNone {
-			if valid, err := validateRoles(accessList.Spec.Grants.Roles); err != nil {
-				// Skip this access list if there is an error when validating roles.
-				continue
-			} else if valid {
-				g.grantRolesAndTraits(accessList.Spec.Grants, state)
-				if membershipKind == accesslists.MembershipOrOwnershipTypeInherited {
-					allInheritedRoles = append(allInheritedRoles, accessList.Spec.Grants.Roles...)
-					for k, values := range accessList.Spec.Grants.Traits {
-						allInheritedTraits[k] = append(allInheritedTraits[k], values...)
-					}
-				}
-			}
+		allInheritedRoles = append(allInheritedRoles, inheritedRoles...)
+		for k, values := range inheritedTraits {
+			allInheritedTraits[k] = append(allInheritedTraits[k], values...)
 		}
 
 		// OwnerGrants are inherited if the user is an owner of the access list, explicitly or via inheritance.
-		ownershipType, err := accesslists.IsAccessListOwner(ctx, user, accessList, g.accessLists, g.accessLists, g.clock)
+		inheritedRoles, inheritedTraits, err = g.handleAccessListOwnership(ctx, user, accessList, state)
 		if err != nil {
-			g.log.WithError(err).Warn("checking access list ownership")
+			return nil, nil, trace.Wrap(err)
 		}
-		if err == nil && ownershipType != accesslists.MembershipOrOwnershipTypeNone {
-			if valid, err := validateRoles(accessList.Spec.OwnerGrants.Roles); err != nil {
-				// Skip this access list if there is an error when validating roles.
-				continue
-			} else if valid {
-				g.grantRolesAndTraits(accessList.Spec.OwnerGrants, state)
-				if ownershipType == accesslists.MembershipOrOwnershipTypeInherited {
-					allInheritedRoles = append(allInheritedRoles, accessList.Spec.OwnerGrants.Roles...)
-					for k, values := range accessList.Spec.OwnerGrants.Traits {
-						allInheritedTraits[k] = append(allInheritedTraits[k], values...)
-					}
-				}
-			}
+		allInheritedRoles = append(allInheritedRoles, inheritedRoles...)
+		for k, values := range inheritedTraits {
+			allInheritedTraits[k] = append(allInheritedTraits[k], values...)
 		}
 	}
 
 	return allInheritedRoles, allInheritedTraits, nil
+}
+
+// handleAccessListMembership validates the access list and applies the grants and traits from the access list to the user if they are a member of the access list.
+func (g *Generator) handleAccessListMembership(ctx context.Context, user types.User, accessList *accesslist.AccessList, state *userloginstate.UserLoginState) ([]string, map[string][]string, error) {
+	var inheritedRoles []string
+	inheritedTraits := make(map[string][]string)
+
+	membershipKind, err := accesslists.IsAccessListMember(ctx, user, accessList, g.accessLists, g.accessLists, g.clock)
+	if err != nil {
+		g.log.WithError(err).Warn("checking access list membership")
+	}
+	if err == nil && membershipKind != accesslists.MembershipOrOwnershipTypeNone {
+		// Validate that all the roles in the access list exist.
+		missingRoles, notFoundErrs, err := g.validateRoles(ctx, accessList.Spec.Grants.Roles)
+		if err != nil {
+			return nil, nil, trace.Wrap(err)
+		}
+
+		// If there are any missing roles, emit an audit event and return early.
+		if missingRoles != nil {
+			g.emitSkippedAccessListEvent(ctx, accessList.Spec.Title, missingRoles, user.GetName(), trace.NewAggregate(notFoundErrs...))
+			return nil, nil, nil
+		}
+
+		g.grantRolesAndTraits(accessList.Spec.Grants, state)
+		if membershipKind == accesslists.MembershipOrOwnershipTypeInherited {
+			inheritedRoles = append(inheritedRoles, accessList.Spec.Grants.Roles...)
+			for k, values := range accessList.Spec.Grants.Traits {
+				inheritedTraits[k] = append(inheritedTraits[k], values...)
+			}
+		}
+	}
+
+	return inheritedRoles, inheritedTraits, nil
+}
+
+// handleAccessListOwnership validates the access list and applies the owner grants and traits from the access list to the user if they are an owner of the access list.
+func (g *Generator) handleAccessListOwnership(ctx context.Context, user types.User, accessList *accesslist.AccessList, state *userloginstate.UserLoginState) ([]string, map[string][]string, error) {
+	var inheritedRoles []string
+	inheritedTraits := make(map[string][]string)
+
+	ownershipType, err := accesslists.IsAccessListOwner(ctx, user, accessList, g.accessLists, g.accessLists, g.clock)
+	if err != nil {
+		g.log.WithError(err).Warn("checking access list ownership")
+	}
+	if err == nil && ownershipType != accesslists.MembershipOrOwnershipTypeNone {
+		// Validate that all the roles in the access list exist.
+		missingRoles, notFoundErrs, err := g.validateRoles(ctx, accessList.Spec.OwnerGrants.Roles)
+		if err != nil {
+			return nil, nil, trace.Wrap(err)
+		}
+
+		// If there are any missing roles, emit an audit event and return early.
+		if missingRoles != nil {
+			g.emitSkippedAccessListEvent(ctx, accessList.Spec.Title, missingRoles, user.GetName(), trace.NewAggregate(notFoundErrs...))
+			return nil, nil, nil
+		}
+
+		g.grantRolesAndTraits(accessList.Spec.OwnerGrants, state)
+		if ownershipType == accesslists.MembershipOrOwnershipTypeInherited {
+			inheritedRoles = append(inheritedRoles, accessList.Spec.OwnerGrants.Roles...)
+			for k, values := range accessList.Spec.OwnerGrants.Traits {
+				inheritedTraits[k] = append(inheritedTraits[k], values...)
+			}
+		}
+	}
+
+	return inheritedRoles, inheritedTraits, nil
 }
 
 // grantRolesAndTraits will append the roles and traits from the provided Grants to the UserLoginState,
@@ -413,5 +429,51 @@ func (g *Generator) LoginHook(ulsService services.UserLoginStates) func(context.
 	return func(ctx context.Context, user types.User) error {
 		_, err := g.Refresh(ctx, user, ulsService)
 		return trace.Wrap(err)
+	}
+}
+
+// validateRoles is a helper function which validates that a given list of roles exist.
+func (g *Generator) validateRoles(ctx context.Context, roles []string) ([]string, []error, error) {
+	var missingRoles []string
+	var notFoundErrs []error
+
+	for _, role := range roles {
+		_, err := g.access.GetRole(ctx, role)
+		if err != nil {
+			if trace.IsNotFound(err) {
+				missingRoles = append(missingRoles, role)
+				notFoundErrs = append(notFoundErrs, err)
+				continue
+			}
+			return nil, nil, trace.Wrap(err)
+		}
+	}
+
+	if len(missingRoles) > 0 {
+		return missingRoles, notFoundErrs, nil
+	}
+
+	return nil, nil, nil
+}
+
+// emitSkippedAccessListEvent emits an audit log event to warn that an access list was skipped due to it referencing a non-existent role.
+func (g *Generator) emitSkippedAccessListEvent(ctx context.Context, accessListName string, missingRoles []string, username string, returnedErr error) {
+	if err := g.emitter.EmitAuditEvent(ctx, &apievents.UserLoginAccessListSkipped{
+		Metadata: apievents.Metadata{
+			Type: events.UserLoginAccessListSkippedEvent,
+			Code: events.UserLoginAccessListSkippedCode,
+		},
+		AccessListSkippedMetadata: apievents.AccessListSkippedMetadata{
+			AccessListName: accessListName,
+			User:           username,
+			MissingRoles:   missingRoles,
+		},
+		Status: apievents.Status{
+			Success:     false,
+			Error:       trace.Unwrap(returnedErr).Error(),
+			UserMessage: "access list skipped because it references non-existent role",
+		},
+	}); err != nil {
+		g.log.WithError(err).Warn("Failed to emit access list skipped warning audit event.")
 	}
 }

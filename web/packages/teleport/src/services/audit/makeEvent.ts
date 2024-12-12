@@ -1661,11 +1661,11 @@ export const formatters: Formatters = {
     format: ({ access_list_name, updated_by }) =>
       `User [${updated_by}] failed to remove all members from access list [${access_list_name}]`,
   },
-  [eventCodes.ACCESS_LIST_SKIPPED]: {
-    type: 'access_list.skipped',
+  [eventCodes.USER_LOGIN_ACCESS_LIST_SKIPPED_MISSING_ROLES]: {
+    type: 'user_login.access_list.skipped.missing_roles',
     desc: 'Access list skipped.',
-    format: ({ access_list_name, user, missing_role }) =>
-      `Access list [${access_list_name}] was skipped for member [${user}] because it references non-existent role [${missing_role}]`,
+    format: ({ access_list_name, user, missing_roles }) =>
+      `Access list [${access_list_name}] was skipped for member [${user}] because it references non-existent role${missing_roles.length > 1 ? 's' : ''} [${missing_roles}]`,
   },
   [eventCodes.SECURITY_REPORT_AUDIT_QUERY_RUN]: {
     type: 'secreports.audit.query.run"',

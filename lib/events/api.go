@@ -737,8 +737,8 @@ const (
 	// AccessListMemberDeleteAllForAccessListEvent is emitted when all members are deleted from an access list.
 	AccessListMemberDeleteAllForAccessListEvent = "access_list.member.delete_all_for_access_list"
 
-	// AccessListSkippedEvent is emitted when a user logs in as a member of an invalid access list, causing the access list to be skipped.
-	AccessListSkippedEvent = "access_list.skipped"
+	// UserLoginAccessListSkippedEventis emitted when a user logs in as a member of an invalid access list, causing the access list to be skipped.
+	UserLoginAccessListSkippedEvent = "user_login.access_list.skipped.missing_roles"
 
 	// UnknownEvent is any event received that isn't recognized as any other event type.
 	UnknownEvent = apievents.UnknownEvent

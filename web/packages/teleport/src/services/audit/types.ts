@@ -276,7 +276,7 @@ export const eventCodes = {
   ACCESS_LIST_MEMBER_DELETE_FAILURE: 'TAL007E',
   ACCESS_LIST_MEMBER_DELETE_ALL_FOR_ACCESS_LIST: 'TAL008I',
   ACCESS_LIST_MEMBER_DELETE_ALL_FOR_ACCESS_LIST_FAILURE: 'TAL008E',
-  ACCESS_LIST_SKIPPED: 'TAL009W',
+  USER_LOGIN_ACCESS_LIST_SKIPPED_MISSING_ROLES: 'TAL009W',
   SECURITY_REPORT_AUDIT_QUERY_RUN: 'SRE001I',
   SECURITY_REPORT_RUN: 'SRE002I',
   EXTERNAL_AUDIT_STORAGE_ENABLE: 'TEA001I',
@@ -1571,12 +1571,12 @@ export type RawEvents = {
       updated_by: string;
     }
   >;
-  [eventCodes.ACCESS_LIST_SKIPPED]: RawEvent<
-    typeof eventCodes.ACCESS_LIST_SKIPPED,
+  [eventCodes.USER_LOGIN_ACCESS_LIST_SKIPPED_MISSING_ROLES]: RawEvent<
+    typeof eventCodes.USER_LOGIN_ACCESS_LIST_SKIPPED_MISSING_ROLES,
     {
       access_list_name: string;
       user: string;
-      missing_role: string;
+      missing_roles: string[];
     }
   >;
   [eventCodes.SECURITY_REPORT_AUDIT_QUERY_RUN]: RawEvent<
