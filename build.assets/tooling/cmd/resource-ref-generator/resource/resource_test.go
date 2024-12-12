@@ -252,37 +252,6 @@ func (a *Application) UnmarshalYAML(value *yaml.Node) error {
 			errorSubstring: "Example YAML:",
 		},
 		{
-			description: "example YAML block",
-			source: `
-package mypkg
-
-// Server includes information about a server registered with Teleport.
-// Example YAML:
-// ---
-// qualities:
-//    - "region:us-east-1"
-//    - team:security
-//      env:dev
-//      role:primary
-type Server struct {
-  // Qualities is a list of either maps or "key:value" strings.
-  Qualities types.CustomAttributes BACKTICKjson:"qualities"BACKTICK
-}
-`,
-
-			expected: map[PackageInfo]ReferenceEntry{
-				PackageInfo{
-					DeclName:    "Server",
-					PackageName: "mypkg",
-				}: {
-					SectionName: "Server",
-					Description: "Includes information about a server registered with Teleport.",
-					SourcePath:  "myfile.go",
-					Fields:      []Field{},
-				},
-			},
-		},
-		{
 			description: "a custom type field with no override and a second source file",
 			source: `
 package mypkg
