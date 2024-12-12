@@ -344,9 +344,6 @@ type ServerSpecV1 struct {
 				`package types
 
 // Label is a custom type that we unmarshal in a non-default way.
-// Example YAML:
-// ---
-// ["my_value0", "my_value1", "my_value2"]
 type Label string
 `,
 			},
@@ -402,9 +399,6 @@ type Label string
 package mypkg
 
 // Server includes information about a server registered with Teleport.
-// Example YAML:
-// ---
-// name: MyServer
 type Server struct {
   Name string
   Impl ServerImplementation
@@ -801,13 +795,6 @@ type Server struct {
     // Name is the name of the server.
     Name string BACKTICKjson:"name"BACKTICK
     // LabelMaps includes a map of strings to labels.
-    // Example YAML:
-    // ---
-    //
-    // - label1: ["my_value0", "my_value1", "my_value2"]
-    //   label2: ["my_value0", "my_value1", "my_value2"]
-    // - label3: ["my_value0", "my_value1", "my_value2"]
-    //   label4: ["my_value0", "my_value1", "my_value2"]
     LabelMaps []map[string]types.Label BACKTICKjson:"label_maps"BACKTICK
 }
 `,
@@ -850,13 +837,6 @@ type Server struct {
     // Name is the name of the server.
     Name string BACKTICKjson:"name"BACKTICK
     // LabelMaps includes a map of strings to labels.
-    // Example YAML:
-    // ---
-    //
-    // - label1: ["my_value0", "my_value1", "my_value2"]
-    //   label2: ["my_value0", "my_value1", "my_value2"]
-    // - label3: ["my_value0", "my_value1", "my_value2"]
-    //   label4: ["my_value0", "my_value1", "my_value2"]
     LabelMaps []map[string]mypkg.Label BACKTICKjson:"label_maps"BACKTICK
 }
 `,
@@ -964,9 +944,6 @@ type Resource struct {
   // The name of the resource.
   Name string BACKTICKjson:"name"BACKTICK
   // How much time must elapse before the resource expires.
-  // Example YAML:
-  // ---
-  // 5h
   Expiry time.Time BACKTICKjson:"expiry"BACKTICK
 }
 `,

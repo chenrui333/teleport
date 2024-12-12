@@ -27,8 +27,6 @@ import (
 	"golang.org/x/tools/go/ast/astutil"
 )
 
-const yamlExampleDelimiter string = "Example YAML:\n---\n"
-
 // Package is used to look up a Go declaration in a map of declaration names to
 // resource data.
 type PackageInfo struct {
@@ -535,20 +533,9 @@ func makeFieldTableInfo(fields []rawField) ([]Field, error) {
 	for _, field := range fields {
 		var desc string
 		var typ string
-		// If there is a predefined YAML example, we don't attempt to
-		// create a field table, since it will probably be inaccurate.
-		// Instead, refer readers to the YAML example.
-		if strings.Contains(field.doc, yamlExampleDelimiter) {
-			sides := strings.Split(field.doc, yamlExampleDelimiter)
-			if len(sides) != 2 {
-				return nil, errors.New("malformed example YAML in description: " + field.doc)
-			}
-			desc = sides[0]
-			typ = "See example YAML."
-		} else {
-			desc = field.doc
-			typ = field.kind.formatForTable()
-		}
+
+		desc = field.doc
+		typ = field.kind.formatForTable()
 		// Escape pipes so they do not affect table rendering.
 		desc = strings.ReplaceAll(desc, "|", `\|`)
 		// Remove surrounding spaces and inner line breaks.
@@ -742,10 +729,7 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 		// since they are part of the containing struct for the purposes
 		// of unmarshaling YAML.
 		//
-		// Also ignore fields we are overriding with a custom YAML
-		// example because the actual type is something we want to hide
-		// from docs readers.
-		if f.name == "" || strings.Contains(f.doc, yamlExampleDelimiter) {
+		if f.name == "" {
 			continue
 		}
 
@@ -763,7 +747,7 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 			}
 			gd, ok := allDecls[d]
 			if !ok {
-				return nil, fmt.Errorf(`%v: field type %v.%v of %v.%v was not declared anywhere in the source, and was probably declared in a third-party package or the standard library. Add "Example YAML:\n---\n" as a comment above fields with this type.`,
+				return nil, fmt.Errorf(`%v: field type %v.%v of %v.%v was not declared anywhere in the source, and was probably declared in a third-party package or the standard library.`,
 					decl.FilePath,
 					d.PackageName,
 					d.DeclName,
