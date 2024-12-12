@@ -96,21 +96,13 @@ export default tseslint.config(
       // <TODO> Enable these recommended typescript-eslint rules after fixing existing issues.
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-this-alias': 'off',
-
       // </TODO>
-      'comma-dangle': 'off',
-      'no-mixed-spaces-and-tabs': 'off',
-      'no-alert': 'off',
-      'import/no-named-as-default': 'off',
-      'import/default': 'error',
-      'no-underscore-dangle': 'off',
+
       'no-case-declarations': 'off',
       'prefer-const': 'off',
       'no-var': 'off',
       'prefer-rest-params': 'off',
-      'prefer-spread': 'off',
 
-      strict: 'off',
       'no-console': 'warn',
       'no-trailing-spaces': 'error',
       'react/display-name': 'off',
