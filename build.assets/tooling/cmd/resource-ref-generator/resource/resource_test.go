@@ -924,6 +924,7 @@ func (stream *streamFunc[T]) Next() bool {
 			description: "field type not declared in a loaded package",
 			source: `package mypkg
 
+// Resource is a resource.
 type Resource struct {
   // The name of the resource.
   Name string
@@ -931,9 +932,29 @@ type Resource struct {
   Expiry time.Duration
 }
 `,
-			expected:       nil,
-			declSources:    []string{},
-			errorSubstring: "not declared",
+			expected: map[PackageInfo]ReferenceEntry{
+				PackageInfo{
+					PackageName: "mypkg",
+					DeclName:    "Resource",
+				}: ReferenceEntry{
+					SectionName: "Resource",
+					Description: "A resource",
+					SourcePath:  "myfile.go",
+					Fields: []Field{
+						{
+							Name:        "name",
+							Description: "The name of the resource",
+							Type:        "string",
+						},
+						{
+							Name:        "Expiry",
+							Description: "How much time must elapse before the resource expires",
+							Type:        "",
+						},
+					},
+				},
+			},
+			declSources: []string{},
 		},
 		{
 			description: "field type not declared in a loaded package with override",
