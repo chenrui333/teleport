@@ -443,15 +443,24 @@ func makeRawField(field *ast.Field, packageName string) (rawField, error) {
 	}, nil
 }
 
-// makeFieldTableInfo assembles a slice of human-readable information about fields
-// within a Go struct to include within the resource reference. Note that
-// makeFieldTableInfo is only concerned with formatting, and cannot determine
-// whether a field type was declared anywhere.
-func makeFieldTableInfo(fields []rawField) ([]Field, error) {
+// makeFieldTableInfo assembles a slice of human-readable information about
+// fields within a Go struct to include within the resource reference. If a
+// field does not exist in allDecls, it formats the table data accordingly.
+func makeFieldTableInfo(fields []rawField, allDecls map[PackageInfo]DeclarationInfo) ([]Field, error) {
 	var result []Field
 	for _, field := range fields {
 		var desc string
 		var typ string
+
+		_, exists := allDecls[PackageInfo{
+			DeclName:    field.name,
+			PackageName: field.packageName,
+		}]
+
+		_, custom := field.kind.(yamlCustomType)
+		if !exists && custom {
+			field.kind = nonYAMLKind{}
+		}
 
 		desc = field.doc
 		typ = field.kind.formatForTable()
@@ -628,7 +637,7 @@ func ReferenceDataFromDeclaration(decl DeclarationInfo, allDecls map[PackageInfo
 		PackageName: decl.PackageName,
 	}
 
-	fld, err := makeFieldTableInfo(fieldsToProcess)
+	fld, err := makeFieldTableInfo(fieldsToProcess, allDecls)
 	if err != nil {
 		return nil, err
 	}
