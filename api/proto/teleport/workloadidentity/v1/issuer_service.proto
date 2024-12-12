@@ -18,6 +18,7 @@ package teleport.workloadidentity.v1;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "teleport/workloadidentity/v1/attrs.proto";
 
 option go_package = "github.com/gravitational/teleport/api/gen/proto/go/teleport/workloadidentity/v1;workloadidentityv1pb";
 
@@ -87,40 +88,4 @@ message IssueWorkloadIdentityRequest {
 // TODO: Comment
 message IssueWorkloadIdentityResponse {
   Credential credential = 1;
-}
-
-// TODO: Comment
-message WorkloadAttrsKubernetes {
-  // The namespace of the workload.
-  string namespace = 1;
-  // The name of the workload.
-  string pod_name = 2;
-}
-
-// The attributes provided by `tbot` regarding the workload's attestation.
-message WorkloadAttrs {
-  // The Kubernetes-specific attributes.
-  WorkloadAttrsKubernetes kubernetes = 1;
-}
-
-// TODO: Comment
-message JoinAttrs {}
-
-// TODO: Comment
-message UserAttrs {
-  // The name of the user.
-  string name = 1;
-  // Whether the user is a bot.
-  bool is_bot = 2;
-  // If the user is a bot, the name of the bot.
-  string bot_name = 3;
-  // Labels of the user.
-  map<string, string> labels = 4;
-}
-
-// TODO: Comment
-message Attrs {
-  JoinAttrs join = 1;
-  WorkloadAttrs workload = 2;
-  UserAttrs user = 3;
 }
